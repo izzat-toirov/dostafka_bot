@@ -2,6 +2,7 @@ import { Update, Ctx, Start, Action, Hears, On } from 'nestjs-telegraf';
 import type { Context } from './interfaces/context.interface';
 import { DeliveryService } from './services/delivery.service';
 import { OrderService } from './services/order.service';
+import { CompanyInfoService } from './services/company-info.service';
 import {
   mainMenuKeyboard,
   deliveryMenuKeyboard,
@@ -18,6 +19,7 @@ export class BotUpdate {
   constructor(
     private readonly deliveryService: DeliveryService,
     private readonly orderService: OrderService,
+    private readonly companyInfoService: CompanyInfoService,
   ) {}
 
   @Start()
@@ -206,6 +208,80 @@ Cheklov: ${maxWeight} gacha`,
     });
   }
 
+  // Biz haqimizda
+  @Hears('ℹ️ Biz haqimizda')
+  async handleAboutUs(@Ctx() ctx: Context) {
+    const companyInfo = this.companyInfoService.getCompanyInfo();
+    const aboutText = `
+*Kompaniyamiz haqida:*
+
+${companyInfo.description}
+
+🎯 *Bizning afzalliklarimiz:*
+${companyInfo.advantages.map((adv) => `• ${adv}`).join('\n')}
+
+📍 *Manzilimiz:* ${companyInfo.address}
+
+📞 *Bog'lanish:* ${companyInfo.phone}
+🌐 *Veb-sayt:* ${companyInfo.website}
+    `;
+
+    await ctx.reply(aboutText, {
+      parse_mode: 'Markdown',
+      ...mainMenuKeyboard(),
+    });
+  }
+
+  // Muloqat o'rnatish
+  @Hears("📞 Muloqat o'rnatish")
+  async handleCompanyContact(@Ctx() ctx: Context) {
+    const contactInfo = this.companyInfoService.getContactInfo();
+    const contactText = `
+*📞 Muloqat o'rnatish*
+
+Biz bilan quyidagi usullar orqali bog'lanishingiz mumkin:
+
+📍 *Ofis manzili:* ${contactInfo.officeAddress}
+
+📱 *Telefon raqamlarimiz:*
+${contactInfo.phones.map((phone) => `• ${phone}`).join('\n')}
+
+📧 *Elektron pochta:* ${contactInfo.email}
+
+🕒 *Ish vaqti:*
+${contactInfo.workHours}
+
+💬 *Telegram:* ${contactInfo.telegram}
+    `;
+
+    await ctx.reply(contactText, {
+      parse_mode: 'Markdown',
+      ...mainMenuKeyboard(),
+    });
+  }
+
+  // Manzilimiz
+  @Hears('📍 Manzilimiz')
+  async handleCompanyLocation(@Ctx() ctx: Context) {
+    const locationInfo = this.companyInfoService.getCompanyLocation();
+    // Kompaniyaning geografik manzilini yuborish
+    await ctx.replyWithLocation(locationInfo.latitude, locationInfo.longitude);
+
+    const locationText = `
+*📍 Bizning manzilimiz:*
+
+${locationInfo.address}
+
+${locationInfo.landmark}
+${locationInfo.reference}
+    `;
+
+    await ctx.reply(locationText, {
+      parse_mode: 'Markdown',
+      ...mainMenuKeyboard(),
+    });
+  }
+
   // Back button
   @Hears(['◀️ Orqaga', '◀️ Назад'])
   async handleBack(@Ctx() ctx: Context) {
@@ -353,19 +429,37 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
     } else if (state === 'waiting_name') {
       ctx.session.userName = messageText;
       await ctx.reply(
-        `Рахмат, ${messageText}!\n\nЭнди телефон рақамингизни юборинг:`,
+        `Рахмат, ${messageText}!
+        
+Энди телефон рақамингизни юборинг:`,
         Markup.keyboard([
           [{ text: '📱 Телефон рақамни юбориш', request_contact: true }],
           [{ text: '◀️ Orqaga' }],
         ]).resize(),
       );
       ctx.session.state = 'waiting_phone_contact';
+    } else if (state === 'waiting_phone_text') {
+      ctx.session.orderData = ctx.session.orderData || {};
+      ctx.session.orderData.phone = messageText;
+      ctx.session.state = 'waiting_comment';
+      await ctx.reply(
+        '📝 *Qo\'shimcha izoh (ixtiyoriy):*\n\nYoki "Yo\'q" deb yuboring:',
+        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+      );
+    } else if (state === 'waiting_phone_text_car') {
+      ctx.session.orderData = ctx.session.orderData || {};
+      ctx.session.orderData.phone = messageText;
+      ctx.session.state = 'waiting_comment';
+      await ctx.reply(
+        '📝 *Qo\'shimcha izoh (ixtiyoriy):*\n\nYoki "Yo\'q" deb yuboring:',
+        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+      );
     }
   }
 
   // Handle contact
   @On('contact')
-  async handleContact(@Ctx() ctx: Context) {
+  async handleUserContact(@Ctx() ctx: Context) {
     if (!ctx.from || !ctx.message || !('contact' in ctx.message)) return;
 
     const state = ctx.session?.state;
@@ -395,7 +489,7 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
 
   // Handle location
   @On('location')
-  async handleLocation(@Ctx() ctx: Context) {
+  async handleUserLocation(@Ctx() ctx: Context) {
     if (!ctx.from || !ctx.message || !('location' in ctx.message)) return;
 
     const state = ctx.session?.state;

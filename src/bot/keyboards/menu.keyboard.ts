@@ -3,6 +3,11 @@ import { Markup } from 'telegraf';
 export const mainMenuKeyboard = () => {
   return Markup.keyboard([
     [{ text: 'Buyurtma berish (Заказать курьера)' }],
+    [
+      { text: 'ℹ️ Biz haqimizda' },
+      { text: "📞 Muloqat o'rnatish" },
+      { text: '📍 Manzilimiz' },
+    ],
     [{ text: '🚚 Yetkazib berish' }, { text: '⚙️ Sozlamalar' }],
   ]).resize();
 };
