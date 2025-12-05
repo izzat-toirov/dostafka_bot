@@ -14,6 +14,7 @@ export interface SessionData {
     dimensions?: string;
     phone?: string;
     comment?: string;
+    paymentMethod?: string;
   };
 }
 

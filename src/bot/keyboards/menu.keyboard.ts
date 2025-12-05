@@ -9,6 +9,7 @@ export const mainMenuKeyboard = () => {
       { text: '📍 Manzilimiz' },
     ],
     [{ text: '🚚 Yetkazib berish' }, { text: '⚙️ Sozlamalar' }],
+    [{ text: "📝 Ro'yxatdan o'tish" }],
   ]).resize();
 };
 
@@ -36,7 +37,7 @@ export const deliveryTypeKeyboard = () => {
       { text: '🚶 Peshkom (15 kg gacha)' },
       { text: '🚗 Legkovoy avtomobil (50 kg gacha)' },
     ],
-    [{ text: '🚚 Gruzovoy transport (300 kg gacha)' }],
+    [{ text: '🚚 Gruzovoy transport' }],
     [{ text: '◀️ Orqaga' }],
   ]).resize();
 };
@@ -68,6 +69,15 @@ export const phoneKeyboard = () => {
       { text: '📱 Telefon raqamni yuborish', request_contact: true },
       { text: '✍️ Raqamni yozish' },
     ],
+    [{ text: '◀️ Orqaga' }],
+  ]).resize();
+};
+
+// To'lov usuli keyboard
+export const paymentMethodKeyboard = () => {
+  return Markup.keyboard([
+    [{ text: "💳 Karta orqali to'lash" }],
+    [{ text: '💵 Naqd pul' }],
     [{ text: '◀️ Orqaga' }],
   ]).resize();
 };
