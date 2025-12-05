@@ -1,4 +1,5 @@
 import { Update, Ctx, Start, Action, Hears, On } from 'nestjs-telegraf';
+import { Telegraf } from 'telegraf';
 import type { Context } from './interfaces/context.interface';
 import { DeliveryService } from './services/delivery.service';
 import { OrderService } from './services/order.service';
@@ -7,10 +8,10 @@ import {
   mainMenuKeyboard,
   deliveryMenuKeyboard,
 } from './keyboards/menu.keyboard';
-import { Markup } from 'telegraf';
 import { OrderHandler } from './handlers/order.handler';
 import { InfoHandler } from './handlers/info.handler';
 import { RegistrationHandler } from './handlers/registration.handler';
+import { Markup } from 'telegraf';
 
 @Update()
 export class BotUpdate {
@@ -48,6 +49,7 @@ export class BotUpdate {
     await this.orderHandler.handleWriteAddress(ctx);
   }
 
+  // asdasdsadadasd
   // Yuk turlari
   @Hears([
     '📦 Hujjatlar / Kichik yuklar',

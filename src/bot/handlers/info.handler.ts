@@ -77,7 +77,8 @@ ${contactInfo.workHours}
 
   async handleCompanyLocation(ctx: Context) {
     const locationInfo = this.companyInfoService.getCompanyLocation();
-    // Kompaniyaning geografik manzilini yuborish
+
+    // Telegramning o'z xaritasini ko'rsatish
     await ctx.replyWithLocation(locationInfo.latitude, locationInfo.longitude);
 
     const locationText = `
