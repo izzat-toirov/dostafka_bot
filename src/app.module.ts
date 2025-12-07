@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { BotModule } from './bot/bot.module';
 import { ConfigModule } from '@nestjs/config';
-import { session } from 'telegraf';
+import LocalSession from 'telegraf-session-local';
+
+const localSession = new LocalSession({ database: 'sessions.json' });
 
 @Module({
   imports: [
@@ -11,7 +13,7 @@ import { session } from 'telegraf';
     }),
     TelegrafModule.forRoot({
       token: process.env.BOT_TOKEN || '',
-      middlewares: [session()],
+      middlewares: [localSession.middleware()],
     }),
     BotModule,
   ],

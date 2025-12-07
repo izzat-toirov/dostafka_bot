@@ -73,6 +73,11 @@ export const phoneKeyboard = () => {
   ]).resize();
 };
 
+// Back button keyboard
+export const backButtonKeyboard = () => {
+  return Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize();
+};
+
 // To'lov usuli keyboard
 export const paymentMethodKeyboard = () => {
   return Markup.keyboard([

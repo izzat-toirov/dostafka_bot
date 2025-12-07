@@ -7,6 +7,7 @@ import {
   carTypeKeyboard,
   phoneKeyboard,
   paymentMethodKeyboard,
+  mainMenuKeyboard,
 } from '../keyboards/menu.keyboard';
 import { OrderService } from '../services/order.service';
 
@@ -27,15 +28,30 @@ export class OrderHandler {
     if (state === 'waiting_from_location') {
       await ctx.reply(
         "✍️ *Qayerdan olib ketish manzilini yozing:*\n\nMasalan: Toshkent, Amir Temur ko'chasi, 10-uy",
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
       ctx.session.state = 'waiting_from_address_text';
     } else if (state === 'waiting_to_location') {
       await ctx.reply(
         "✍️ *Qayerga yetkazib berish manzilini yozing:*\n\nMasalan: Toshkent, Navoiy ko'chasi, 5-uy",
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
       ctx.session.state = 'waiting_to_address_text';
+    } else if (state === 'waiting_additional_location') {
+      await ctx.reply(
+        "✍️ *Qo‘shimcha manzilni yozing:*\n\nMasalan: Toshkent, Chilonzor ko'chasi, 15-uy",
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
+      );
+      ctx.session.state = 'waiting_additional_location_text';
     }
   }
 
@@ -51,7 +67,10 @@ export class OrderHandler {
       `⚖️ *Yuk og'irligini kiriting:*
       
 Masalan: 5 kg, 10 kg`,
-      { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+      {
+        parse_mode: 'Markdown',
+        ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+      },
     );
   }
 
@@ -63,7 +82,6 @@ Masalan: 5 kg, 10 kg`,
     const transportType = ctx.message.text;
     ctx.session.orderData.transportType = transportType;
 
-    // Agar Gruzovoy tanlansa, mashina turlarini ko'rsat
     if (transportType.includes('Gruzovoy')) {
       ctx.session.state = 'waiting_car_type';
       await ctx.reply('🚗 *Mashina turini tanlang:*', {
@@ -71,7 +89,6 @@ Masalan: 5 kg, 10 kg`,
         ...carTypeKeyboard(),
       });
     } else {
-      // Og'irlik chegarasini aniqlash
       let maxWeight = '';
       if (transportType.includes('Peshkom')) {
         maxWeight = '15 kg';
@@ -108,19 +125,22 @@ Cheklov: ${maxWeight} gacha`,
   async handleWritePhone(ctx: Context) {
     const state = ctx.session?.state;
 
-    // Agar mashina tanlashda bo'lsa
     if (state === 'waiting_car_type') {
       await ctx.reply(
         '✍️ *Telefon raqamingizni yozing:*\\n\\nMasalan: +998901234567',
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
       ctx.session.state = 'waiting_phone_text_car';
-    }
-    // Agar telefon kiritishda bo'lsa
-    else if (state === 'waiting_phone') {
+    } else if (state === 'waiting_phone') {
       await ctx.reply(
         '✍️ *Telefon raqamingizni yozing:*\\n\\nMasalan: +998901234567',
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
       ctx.session.state = 'waiting_phone_text';
     }
@@ -131,7 +151,6 @@ Cheklov: ${maxWeight} gacha`,
 
     const state = ctx.session?.state;
 
-    // Buyurtma jarayoni
     if (
       state === 'waiting_from_address_text' ||
       state === 'waiting_from_location'
@@ -149,11 +168,35 @@ Cheklov: ${maxWeight} gacha`,
     ) {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.toAddress = messageText;
+
+      const additionalLocationKeyboard = Markup.keyboard([
+        [{ text: '📍 Qo‘shimcha manzilni yuborish', request_location: true }],
+        [{ text: '✍️ Qo‘shimcha manzilni yozish' }],
+        [{ text: '⏭ Davom etish' }],
+        [{ text: '◀️ Orqaga' }],
+      ]).resize();
+
+      await ctx.reply(
+        'Agar qo‘shimcha manzil bo‘lsa, lokatsiya yuboring. Aks holda "Davom etish" tugmasini bosing:',
+        additionalLocationKeyboard,
+      );
+      ctx.session.state = 'waiting_additional_location_choice';
+    } else if (state === 'waiting_additional_location_text') {
+      ctx.session.orderData = ctx.session.orderData || {};
+      ctx.session.orderData.additionalAddress = messageText;
       ctx.session.state = 'waiting_cargo_type';
       await ctx.reply('📦 *Yuk turini tanlang:*', {
         parse_mode: 'Markdown',
         ...cargoTypeKeyboard(),
       });
+    } else if (state === 'waiting_additional_location_choice') {
+      if (messageText === '⏭ Davom etish') {
+        ctx.session.state = 'waiting_cargo_type';
+        await ctx.reply('📦 *Yuk turini tanlang:*', {
+          parse_mode: 'Markdown',
+          ...cargoTypeKeyboard(),
+        });
+      }
     } else if (state === 'waiting_weight') {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.weight = messageText;
@@ -168,7 +211,6 @@ Cheklov: ${maxWeight} gacha`,
         ctx.session.orderData.comment = messageText;
       }
 
-      // To'lov usulini so'rash
       ctx.session.state = 'waiting_payment_method';
       await ctx.reply("💳 *To'lov usulini tanlang:*", {
         parse_mode: 'Markdown',
@@ -178,29 +220,32 @@ Cheklov: ${maxWeight} gacha`,
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.paymentMethod = messageText;
 
-      // Buyurtma xulasasi
       const order = ctx.session.orderData;
-      const summary = `
+      let summary = `
 ✅ *Buyurtma qabul qilindi!*
 
 📍 *Qayerdan:* ${order.fromAddress}
 📍 *Qayerga:* ${order.toAddress}
-📦 *Yuk:* ${order.cargoType}
+`;
+
+      if (order.additionalAddress) {
+        summary += `📍 *Qo‘shimcha manzil:* ${order.additionalAddress}\n`;
+      }
+
+      summary += `📦 *Yuk:* ${order.cargoType}
 ⚖️ *Og'irlik:* ${order.weight}
 🚗 *Transport:* ${order.transportType}
 📱 *Telefon:* ${order.phone}
 💳 *To'lov usuli:* ${order.paymentMethod}
 ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
-
-⏱ *Haydovchi tez orada bog'lanadi!*
-      `;
+      
+⏱ *Haydovchi tez orada bog'lanadi!*`;
 
       await ctx.reply(summary, {
         parse_mode: 'Markdown',
-        ...this.mainMenuKeyboard(),
+        ...mainMenuKeyboard(),
       });
 
-      // Buyurtmani saqlash
       await this.orderService.saveReview(ctx.from.id, JSON.stringify(order));
 
       ctx.session.state = null;
@@ -211,7 +256,10 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
       ctx.session.state = 'waiting_comment';
       await ctx.reply(
         '📝 *Qo\'shimcha izoh (ixtiyoriy):*\n\nYoki "Yo\'q" deb yuboring:',
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
     } else if (state === 'waiting_phone_text_car') {
       ctx.session.orderData = ctx.session.orderData || {};
@@ -219,7 +267,10 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
       ctx.session.state = 'waiting_comment';
       await ctx.reply(
         '📝 *Qo\'shimcha izoh (ixtiyoriy):*\n\nYoki "Yo\'q" deb yuboring:',
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
     }
   }
@@ -235,7 +286,10 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
       ctx.session.state = 'waiting_comment';
       await ctx.reply(
         '📝 *Qo\'shimcha izoh (ixtiyoriy):*\n\nYoki "Yo\'q" deb yuboring:',
-        { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+        {
+          parse_mode: 'Markdown',
+          ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        },
       );
     }
   }
@@ -258,29 +312,35 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
     } else if (state === 'waiting_to_location') {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.toAddress = locationText;
+
+      const additionalLocationKeyboard = Markup.keyboard([
+        [{ text: '📍 Qo‘shimcha manzilni yuborish', request_location: true }],
+        [{ text: '✍️ Qo‘shimcha manzilni yozish' }],
+        [{ text: '⏭ Davom etish' }],
+        [{ text: '◀️ Orqaga' }],
+      ]).resize();
+
+      await ctx.reply(
+        'Agar qo‘shimcha manzil bo‘lsa, lokatsiya yuboring. Aks holda "Davom etish" tugmasini bosing:',
+        additionalLocationKeyboard,
+      );
+      ctx.session.state = 'waiting_additional_location_choice';
+    } else if (state === 'waiting_additional_location') {
+      ctx.session.orderData = ctx.session.orderData || {};
+      ctx.session.orderData.additionalAddress = locationText;
+      ctx.session.state = 'waiting_cargo_type';
+      await ctx.reply('📦 *Yuk turini tanlang:*', {
+        parse_mode: 'Markdown',
+        ...cargoTypeKeyboard(),
+      });
+    } else if (state === 'waiting_additional_location_choice') {
+      ctx.session.orderData = ctx.session.orderData || {};
+      ctx.session.orderData.additionalAddress = locationText;
       ctx.session.state = 'waiting_cargo_type';
       await ctx.reply('📦 *Yuk turini tanlang:*', {
         parse_mode: 'Markdown',
         ...cargoTypeKeyboard(),
       });
     }
-  }
-
-  // Umumiy keyboard metodlari
-  private backButtonKeyboard() {
-    return Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize();
-  }
-
-  private mainMenuKeyboard() {
-    return Markup.keyboard([
-      [{ text: 'Buyurtma berish (Заказать курьера)' }],
-      [
-        { text: 'ℹ️ Biz haqimizda' },
-        { text: "📞 Muloqat o'rnatish" },
-        { text: '📍 Manzilimiz' },
-      ],
-      [{ text: '🚚 Yetkazib berish' }, { text: '⚙️ Sozlamalar' }],
-      [{ text: "📝 Ro'yxatdan o'tish" }],
-    ]).resize();
   }
 }

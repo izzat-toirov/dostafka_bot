@@ -1,6 +1,10 @@
 import { Context } from '../interfaces/context.interface';
 import { Markup } from 'telegraf';
 import { OrderService } from '../services/order.service';
+import {
+  mainMenuKeyboard,
+  backButtonKeyboard,
+} from '../keyboards/menu.keyboard';
 
 export class RegistrationHandler {
   constructor(private readonly orderService: OrderService) {}
@@ -47,19 +51,10 @@ export class RegistrationHandler {
 
   // Umumiy keyboard metodlari
   private backButtonKeyboard() {
-    return Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize();
+    return backButtonKeyboard();
   }
 
   private mainMenuKeyboard() {
-    return Markup.keyboard([
-      [{ text: 'Buyurtma berish (Заказать курьера)' }],
-      [
-        { text: 'ℹ️ Biz haqimizda' },
-        { text: "📞 Muloqat o'rnatish" },
-        { text: '📍 Manzilimiz' },
-      ],
-      [{ text: '🚚 Yetkazib berish' }, { text: '⚙️ Sozlamalar' }],
-      [{ text: "📝 Ro'yxatdan o'tish" }],
-    ]).resize();
+    return mainMenuKeyboard();
   }
 }

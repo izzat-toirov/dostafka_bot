@@ -8,6 +8,7 @@ export interface SessionData {
   orderData?: {
     fromAddress?: string;
     toAddress?: string;
+    additionalAddress?: string;
     cargoType?: string;
     transportType?: string;
     weight?: string;
