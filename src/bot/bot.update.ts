@@ -134,7 +134,7 @@ export class BotUpdate {
       await ctx.reply('Bosh menyu', mainMenuKeyboard());
     } else if (state === 'waiting_phone_contact') {
       ctx.session.state = 'waiting_name';
-      await ctx.reply('Ismingizni kiriting:', this.backButtonKeyboard());
+      await ctx.reply('Ismingizni kiriting:', backButtonKeyboard());
     } else if (
       state === 'waiting_to_location' ||
       state === 'waiting_to_address_text'
@@ -142,19 +142,19 @@ export class BotUpdate {
       ctx.session.state = 'waiting_from_location';
       await ctx.reply(
         '📍 *Qayerdan olib ketish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...this.locationKeyboard() },
+        { parse_mode: 'Markdown', ...locationKeyboard() },
       );
     } else if (state === 'waiting_cargo_type') {
       ctx.session.state = 'waiting_to_location';
       await ctx.reply(
         '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...this.locationKeyboard() },
+        { parse_mode: 'Markdown', ...locationKeyboard() },
       );
     } else if (state === 'waiting_weight') {
       ctx.session.state = 'waiting_cargo_type';
       await ctx.reply('📦 *Yuk turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...this.cargoTypeKeyboard(),
+        ...cargoTypeKeyboard(),
       });
     } else if (state === 'waiting_transport_type') {
       ctx.session.state = 'waiting_weight';
@@ -166,19 +166,19 @@ export class BotUpdate {
       ctx.session.state = 'waiting_transport_type';
       await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...this.deliveryTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else if (state === 'waiting_phone') {
       ctx.session.state = 'waiting_transport_type';
       await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...this.deliveryTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else if (state === 'waiting_comment') {
       ctx.session.state = 'waiting_phone';
       await ctx.reply('📱 *Telefon raqamingizni yuboring:*', {
         parse_mode: 'Markdown',
-        ...this.phoneKeyboard(),
+        ...phoneKeyboard(),
       });
     } else if (
       state === 'waiting_from_location' ||
@@ -191,7 +191,7 @@ export class BotUpdate {
       ctx.session.state = 'waiting_to_location';
       await ctx.reply(
         '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...this.locationKeyboard() },
+        { parse_mode: 'Markdown', ...locationKeyboard() },
       );
     } else if (
       state === 'waiting_additional_location' ||
@@ -200,7 +200,7 @@ export class BotUpdate {
       ctx.session.state = 'waiting_to_location';
       await ctx.reply(
         '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...this.locationKeyboard() },
+        { parse_mode: 'Markdown', ...locationKeyboard() },
       );
     } else {
       if (state && state.startsWith('waiting_')) {
@@ -230,7 +230,7 @@ export class BotUpdate {
       ctx.session.state = 'waiting_to_location';
       await ctx.reply(
         '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...this.locationKeyboard() },
+        { parse_mode: 'Markdown', ...locationKeyboard() },
       );
     } else if (state === 'waiting_to_address_text') {
       ctx.session.orderData = {
@@ -256,22 +256,23 @@ export class BotUpdate {
         additionalAddress: messageText,
       };
 
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
+      ctx.session.state = 'waiting_transport_type';
+      await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else if (state === 'waiting_additional_location_choice') {
       if (messageText === '⏭ Davom etish') {
-        ctx.session.state = 'waiting_cargo_type';
-        await ctx.reply('📦 *Yuk turini tanlang:*', {
+        ctx.session.state = 'waiting_transport_type';
+        // Show only transport type selection
+        await ctx.reply('🚗 *Transport turini tanlang:*', {
           parse_mode: 'Markdown',
-          ...cargoTypeKeyboard(),
+          ...deliveryTypeKeyboard(),
         });
       } else if (messageText === '✍️ Qo‘shimcha manzilni yozish') {
         await ctx.reply(
           "✍️ *Qo‘shimcha manzilni yozing:*\n\nMasalan: Toshkent, Chilonzor ko'chasi, 15-uy",
-          { parse_mode: 'Markdown', ...this.backButtonKeyboard() },
+          { parse_mode: 'Markdown', ...backButtonKeyboard() },
         );
         ctx.session.state = 'waiting_additional_location_text';
       } else {
@@ -308,7 +309,7 @@ export class BotUpdate {
       ctx.session.state = 'waiting_to_location';
       await ctx.reply(
         '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...this.locationKeyboard() },
+        { parse_mode: 'Markdown', ...locationKeyboard() },
       );
     } else if (state === 'waiting_to_location') {
       const location = ctx.message.location;
@@ -336,10 +337,11 @@ export class BotUpdate {
         additionalAddress: `Lokatsiya: ${location.latitude}, ${location.longitude}`,
       };
 
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
+      ctx.session.state = 'waiting_transport_type';
+      // Show only transport type selection
+      await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else if (state === 'waiting_additional_location_choice') {
       const location = ctx.message.location;
@@ -348,33 +350,14 @@ export class BotUpdate {
         additionalAddress: `Lokatsiya: ${location.latitude}, ${location.longitude}`,
       };
 
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
+      ctx.session.state = 'waiting_transport_type';
+      // Show only transport type selection
+      await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else {
       await this.orderHandler.handleUserLocation(ctx);
     }
-  }
-
-  private locationKeyboard() {
-    return locationKeyboard();
-  }
-
-  private cargoTypeKeyboard() {
-    return cargoTypeKeyboard();
-  }
-
-  private deliveryTypeKeyboard() {
-    return deliveryTypeKeyboard();
-  }
-
-  private backButtonKeyboard() {
-    return backButtonKeyboard();
-  }
-
-  private phoneKeyboard() {
-    return phoneKeyboard();
   }
 }

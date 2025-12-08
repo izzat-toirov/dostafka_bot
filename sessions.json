@@ -4,8 +4,12 @@
       "id": "6779915471:6779915471",
       "data": {
         "__scenes": {},
-        "state": null,
-        "orderData": {}
+        "state": "waiting_weight",
+        "orderData": {
+          "fromAddress": "sdf",
+          "toAddress": "fs",
+          "transportType": "🚶 Peshkom (15 kg gacha)"
+        }
       }
     }
   ]

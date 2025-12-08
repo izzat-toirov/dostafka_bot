@@ -61,15 +61,28 @@ export class OrderHandler {
 
     ctx.session.orderData = ctx.session.orderData || {};
     ctx.session.orderData.cargoType = ctx.message.text;
-    ctx.session.state = 'waiting_weight';
+    ctx.session.state = 'waiting_phone';
+
+    // Get the weight limit based on transport type
+    let maxWeight = '';
+    const transportType = ctx.session.orderData.transportType || '';
+    if (transportType.includes('Peshkom')) {
+      maxWeight = '15 kg';
+    } else if (transportType.includes('Legkovoy')) {
+      maxWeight = '50 kg';
+    } else if (transportType.includes('Gruzovoy')) {
+      maxWeight = '300 kg';
+    } else {
+      maxWeight = '50 kg';
+    }
 
     await ctx.reply(
-      `⚖️ *Yuk og'irligini kiriting:*
+      `📱 *Telefon raqamingizni yuboring:*
       
-Masalan: 5 kg, 10 kg`,
+Cheklov: ${maxWeight} gacha`,
       {
         parse_mode: 'Markdown',
-        ...Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize(),
+        ...phoneKeyboard(),
       },
     );
   }
@@ -89,21 +102,11 @@ Masalan: 5 kg, 10 kg`,
         ...carTypeKeyboard(),
       });
     } else {
-      let maxWeight = '';
-      if (transportType.includes('Peshkom')) {
-        maxWeight = '15 kg';
-      } else if (transportType.includes('Legkovoy')) {
-        maxWeight = '50 kg';
-      } else {
-        maxWeight = '300 kg';
-      }
-
-      ctx.session.state = 'waiting_phone';
+      // Go to weight entry first, then phone
+      ctx.session.state = 'waiting_weight';
       await ctx.reply(
-        `📱 *Telefon raqamingizni yuboring:*
-        
-Cheklov: ${maxWeight} gacha`,
-        { parse_mode: 'Markdown', ...phoneKeyboard() },
+        "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
+        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
       );
     }
   }
@@ -114,12 +117,12 @@ Cheklov: ${maxWeight} gacha`,
 
     ctx.session.orderData = ctx.session.orderData || {};
     ctx.session.orderData.transportType += ` - ${ctx.message.text}`;
-    ctx.session.state = 'waiting_phone';
-    await ctx.reply(
-      `📱 *Telefon raqamingizni yuboring:*
-      `,
-      { parse_mode: 'Markdown', ...phoneKeyboard() },
-    );
+    // Go to weight entry first, then phone
+    ctx.session.state = 'waiting_weight';
+    await ctx.reply("⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg", {
+      parse_mode: 'Markdown',
+      ...mainMenuKeyboard(),
+    });
   }
 
   async handleWritePhone(ctx: Context) {
@@ -184,26 +187,28 @@ Cheklov: ${maxWeight} gacha`,
     } else if (state === 'waiting_additional_location_text') {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.additionalAddress = messageText;
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
+      ctx.session.state = 'waiting_transport_type';
+      // Show only transport type selection
+      await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else if (state === 'waiting_additional_location_choice') {
       if (messageText === '⏭ Davom etish') {
-        ctx.session.state = 'waiting_cargo_type';
-        await ctx.reply('📦 *Yuk turini tanlang:*', {
+        ctx.session.state = 'waiting_transport_type';
+        // Show only transport type selection
+        await ctx.reply('🚗 *Transport turini tanlang:*', {
           parse_mode: 'Markdown',
-          ...cargoTypeKeyboard(),
+          ...deliveryTypeKeyboard(),
         });
       }
     } else if (state === 'waiting_weight') {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.weight = messageText;
-      ctx.session.state = 'waiting_transport_type';
-      await ctx.reply('🚗 *Transport turini tanlang:*', {
+      ctx.session.state = 'waiting_cargo_type';
+      await ctx.reply('📦 *Yuk turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...deliveryTypeKeyboard(),
+        ...cargoTypeKeyboard(),
       });
     } else if (state === 'waiting_comment') {
       ctx.session.orderData = ctx.session.orderData || {};
@@ -328,18 +333,20 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
     } else if (state === 'waiting_additional_location') {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.additionalAddress = locationText;
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
+      ctx.session.state = 'waiting_transport_type';
+      // Show only transport type selection
+      await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     } else if (state === 'waiting_additional_location_choice') {
       ctx.session.orderData = ctx.session.orderData || {};
       ctx.session.orderData.additionalAddress = locationText;
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
+      ctx.session.state = 'waiting_transport_type';
+      // Show only transport type selection
+      await ctx.reply('🚗 *Transport turini tanlang:*', {
         parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
+        ...deliveryTypeKeyboard(),
       });
     }
   }
