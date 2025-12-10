@@ -6,6 +6,7 @@ export class InfoHandler {
   constructor(private readonly companyInfoService: CompanyInfoService) {}
 
   async handleMyOrders(ctx: Context) {
+    // Foydalanuvchining buyurtmalarini ko'rsatish
     await ctx.reply(
       "📦 *Sizning buyurtmalaringiz:*\n\nTez orada bu yerda buyurtmalar tarixi ko'rsatiladi.",
       {
@@ -16,6 +17,7 @@ export class InfoHandler {
   }
 
   async handleSettings(ctx: Context) {
+    // Sozlamalar menyusini ko'rsatish
     await ctx.reply('⚙️ Sozlamalar\n\nTilni tanlang / Выберите язык:', {
       reply_markup: {
         keyboard: [
@@ -28,6 +30,7 @@ export class InfoHandler {
   }
 
   async handleAboutUs(ctx: Context) {
+    // Kompaniya haqida ma'lumot
     const companyInfo = this.companyInfoService.getCompanyInfo();
     const aboutText = `
 *Kompaniyamiz haqida:*
@@ -50,6 +53,7 @@ ${companyInfo.advantages.map((adv) => `• ${adv}`).join('\n')}
   }
 
   async handleCompanyContact(ctx: Context) {
+    // Kompaniyaning aloqa ma'lumotlari
     const contactInfo = this.companyInfoService.getContactInfo();
     const contactText = `
 *📞 Muloqat o'rnatish*
@@ -76,6 +80,7 @@ ${contactInfo.workHours}
   }
 
   async handleCompanyLocation(ctx: Context) {
+    // Kompaniyaning manzili
     const locationInfo = this.companyInfoService.getCompanyLocation();
 
     // Telegramning o'z xaritasini ko'rsatish

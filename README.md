@@ -96,3 +96,50 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+# Dostafka Telegram Bot
+
+Bu loyiha [NestJS](https://nestjs.com/) frameworki asosida yaratilgan Telegram botdir.
+
+## Talablarni o'rnatish
+
+```bash
+npm install
+```
+
+## Loyihani ishga tushirish
+
+```bash
+# Development rejimida
+npm run start
+
+# Watch rejimida (fayl o'zgarganda avtomatik qayta ishga tushadi)
+npm run start:dev
+
+# Production rejimida
+npm run start:prod
+```
+
+## Botni ishga tushirish
+
+1. `.env` fayliga Telegram bot tokenini qo'shing
+2. `npm run start:dev` buyrug'i orqali botni ishga tushiring
+3. Telegramda botga xabar yuboring
+
+## Loyiha tuzilmasi
+
+- `src/main.ts` - Asosiy kirish nuqtasi
+- `src/app.module.ts` - Asosiy modul
+- `src/bot/` - Bot logikasi
+  - `bot.update.ts` - Telegram xabarlarini qayta ishlash
+  - `services/` - Servislar
+  - `handlers/` - Xabarlar bilan ishlash
+  - `keyboards/` - Tugmalar
+  - `interfaces/` - Interfeyslar
+
+## Texnologiyalar
+
+- [NestJS](https://nestjs.com/)
+- [nestjs-telegraf](https://github.com/bukhalo/nestjs-telegraf)
+- [Telegraf](https://telegraf.js.org/)
+- [TypeScript](https://www.typescriptlang.org/)

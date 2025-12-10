@@ -1,23 +1,39 @@
 {
   "compilerOptions": {
+    // Modul tizimi - Node.js yangi versiyalari uchun
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
+    
+    // ECMAScript modullari bilan moslik
     "esModuleInterop": true,
     "isolatedModules": true,
+    
+    // Dekoratorlar uchun sozlamalar
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    
+    // JavaScript versiyasi
     "target": "ES2023",
+    
+    // Debugging uchun sourcemap
     "sourceMap": true,
+    
+    // Build fayllar uchun papka
     "outDir": "./dist",
-    // "baseUrl": "./",
+    
+    // Inkremental build
     "incremental": true,
+    
+    // Tekshirishlar
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
+    
+    // TypeScript qat'iylik darajasi
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false

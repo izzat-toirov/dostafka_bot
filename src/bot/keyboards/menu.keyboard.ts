@@ -1,5 +1,6 @@
 import { Markup } from 'telegraf';
 
+// Asosiy menyuni ko'rsatish
 export const mainMenuKeyboard = () => {
   return Markup.keyboard([
     [{ text: 'Buyurtma berish (Заказать курьера)' }],
@@ -13,6 +14,7 @@ export const mainMenuKeyboard = () => {
   ]).resize();
 };
 
+// Yetkazib berish menyusi
 export const deliveryMenuKeyboard = () => {
   return Markup.keyboard([
     [{ text: '📦 Buyurtmalarim' }],

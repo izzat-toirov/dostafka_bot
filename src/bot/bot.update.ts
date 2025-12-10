@@ -16,13 +16,20 @@ import {
 import { OrderHandler } from './handlers/order.handler';
 import { InfoHandler } from './handlers/info.handler';
 import { RegistrationHandler } from './handlers/registration.handler';
-import { Markup } from 'telegraf';
+import { BackHandler } from './handlers/back.handler';
+import { TextHandler } from './handlers/text.handler';
+import { ContactHandler } from './handlers/contact.handler';
+import { LocationHandler } from './handlers/location.handler';
 
 @Update()
 export class BotUpdate {
   private readonly orderHandler: OrderHandler;
   private readonly infoHandler: InfoHandler;
   private readonly registrationHandler: RegistrationHandler;
+  private readonly backHandler: BackHandler;
+  private readonly textHandler: TextHandler;
+  private readonly contactHandler: ContactHandler;
+  private readonly locationHandler: LocationHandler;
 
   constructor(
     private readonly deliveryService: DeliveryService,
@@ -32,10 +39,15 @@ export class BotUpdate {
     this.orderHandler = new OrderHandler(orderService);
     this.infoHandler = new InfoHandler(companyInfoService);
     this.registrationHandler = new RegistrationHandler(orderService);
+    this.backHandler = new BackHandler();
+    this.textHandler = new TextHandler(orderService);
+    this.contactHandler = new ContactHandler(orderService);
+    this.locationHandler = new LocationHandler(orderService);
   }
 
   @Start()
   async start(@Ctx() ctx: Context) {
+    // Foydalanuvchiga boshlang'ich xabar va menyuni ko'rsatish
     await ctx.reply(
       '👋 Assalomu alaykum!\n\nXush kelibsiz! Quyidagi tugmalardan birini tanlang:',
       mainMenuKeyboard(),
@@ -44,16 +56,23 @@ export class BotUpdate {
 
   @Hears('Buyurtma berish (Заказать курьера)')
   async handleOrderDelivery(@Ctx() ctx: Context) {
-    ctx.session.state = 'waiting_from_location';
-    await ctx.reply(
-      '📍 *Qayerdan olib ketish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-      { parse_mode: 'Markdown', ...locationKeyboard() },
-    );
+    // Buyurtma berish jarayonini boshlash - avval transport turini tanlash
+    ctx.session.state = 'waiting_transport_type';
+    await ctx.reply('🚗 *Transport turini tanlang:*', {
+      parse_mode: 'Markdown',
+      ...deliveryTypeKeyboard(),
+    });
   }
 
   @Hears('✍️ Manzilni yozish')
   async handleWriteAddress(@Ctx() ctx: Context) {
     await this.orderHandler.handleWriteAddress(ctx);
+  }
+
+  @Hears('🚖 Haydovchi chaqirish')
+  async handleCallDriver(@Ctx() ctx: Context) {
+    // Haydovchi chaqirish funksiyasi
+    await ctx.reply('🚖 Haydovchi chaqirilmoqda...', mainMenuKeyboard());
   }
 
   @Hears([
@@ -62,6 +81,7 @@ export class BotUpdate {
     '📦 Katta yuk (50+ kg)',
   ])
   async handleCargoType(@Ctx() ctx: Context) {
+    // Yuk turi tanlovi
     await this.orderHandler.handleCargoType(ctx);
   }
 
@@ -71,6 +91,7 @@ export class BotUpdate {
     '🚚 Gruzovoy transport',
   ])
   async handleTransportType(@Ctx() ctx: Context) {
+    // Transport turi tanlovi
     await this.orderHandler.handleTransportType(ctx);
   }
 
@@ -81,283 +102,204 @@ export class BotUpdate {
     '🚚 Gazel do 17 m3, 1500 kg',
   ])
   async handleCarType(@Ctx() ctx: Context) {
+    // Avtomobil turi tanlovi
     await this.orderHandler.handleCarType(ctx);
   }
 
   @Hears('✍️ Raqamni yozish')
   async handleWritePhone(@Ctx() ctx: Context) {
+    // Telefon raqamini matn sifatida kiritish
     await this.orderHandler.handleWritePhone(ctx);
   }
 
   @Hears('🚚 Yetkazib berish')
   async handleDelivery(@Ctx() ctx: Context) {
+    // Yetkazib berish menyusini ko'rsatish
     await ctx.reply('🚚 Buyurtmalarim', deliveryMenuKeyboard());
   }
 
   @Hears('📦 Buyurtmalarim')
   async handleMyOrders(@Ctx() ctx: Context) {
+    // Foydalanuvchining buyurtmalarini ko'rsatish
     await this.infoHandler.handleMyOrders(ctx);
   }
 
   @Hears('⚙️ Sozlamalar')
   async handleSettings(@Ctx() ctx: Context) {
+    // Sozlamalar menyusini ko'rsatish
     await this.infoHandler.handleSettings(ctx);
   }
 
   @Hears('ℹ️ Biz haqimizda')
   async handleAboutUs(@Ctx() ctx: Context) {
+    // Kompaniya haqida ma'lumot
     await this.infoHandler.handleAboutUs(ctx);
   }
 
   @Hears("📞 Muloqat o'rnatish")
   async handleCompanyContact(@Ctx() ctx: Context) {
+    // Kompaniyaning aloqa ma'lumotlari
     await this.infoHandler.handleCompanyContact(ctx);
   }
 
   @Hears('📍 Manzilimiz')
   async handleCompanyLocation(@Ctx() ctx: Context) {
+    // Kompaniyaning manzili
     await this.infoHandler.handleCompanyLocation(ctx);
   }
 
   @Hears("📝 Ro'yxatdan o'tish")
   async handleRegistration(@Ctx() ctx: Context) {
+    // Foydalanuvchini ro'yxatdan o'tkazish
     await this.registrationHandler.handleRegistration(ctx);
   }
 
   @Hears(['◀️ Orqaga', '◀️ Назад'])
   async handleBack(@Ctx() ctx: Context) {
-    const state = ctx.session?.state;
-
-    if (state === 'waiting_name') {
-      ctx.session.state = null;
-      ctx.session.userName = undefined;
-      await ctx.reply('Bosh menyu', mainMenuKeyboard());
-    } else if (state === 'waiting_phone_contact') {
-      ctx.session.state = 'waiting_name';
-      await ctx.reply('Ismingizni kiriting:', backButtonKeyboard());
-    } else if (
-      state === 'waiting_to_location' ||
-      state === 'waiting_to_address_text'
-    ) {
-      ctx.session.state = 'waiting_from_location';
-      await ctx.reply(
-        '📍 *Qayerdan olib ketish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...locationKeyboard() },
-      );
-    } else if (state === 'waiting_cargo_type') {
-      ctx.session.state = 'waiting_to_location';
-      await ctx.reply(
-        '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...locationKeyboard() },
-      );
-    } else if (state === 'waiting_weight') {
-      ctx.session.state = 'waiting_cargo_type';
-      await ctx.reply('📦 *Yuk turini tanlang:*', {
-        parse_mode: 'Markdown',
-        ...cargoTypeKeyboard(),
-      });
-    } else if (state === 'waiting_transport_type') {
-      ctx.session.state = 'waiting_weight';
-      await ctx.reply(
-        "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
-      );
-    } else if (state === 'waiting_car_type') {
-      ctx.session.state = 'waiting_transport_type';
-      await ctx.reply('🚗 *Transport turini tanlang:*', {
-        parse_mode: 'Markdown',
-        ...deliveryTypeKeyboard(),
-      });
-    } else if (state === 'waiting_phone') {
-      ctx.session.state = 'waiting_transport_type';
-      await ctx.reply('🚗 *Transport turini tanlang:*', {
-        parse_mode: 'Markdown',
-        ...deliveryTypeKeyboard(),
-      });
-    } else if (state === 'waiting_comment') {
-      ctx.session.state = 'waiting_phone';
-      await ctx.reply('📱 *Telefon raqamingizni yuboring:*', {
-        parse_mode: 'Markdown',
-        ...phoneKeyboard(),
-      });
-    } else if (
-      state === 'waiting_from_location' ||
-      state === 'waiting_from_address_text'
-    ) {
-      ctx.session.state = null;
-      ctx.session.orderData = {};
-      await ctx.reply('Bosh menyu', mainMenuKeyboard());
-    } else if (state === 'waiting_additional_location_choice') {
-      ctx.session.state = 'waiting_to_location';
-      await ctx.reply(
-        '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...locationKeyboard() },
-      );
-    } else if (
-      state === 'waiting_additional_location' ||
-      state === 'waiting_additional_location_text'
-    ) {
-      ctx.session.state = 'waiting_to_location';
-      await ctx.reply(
-        '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...locationKeyboard() },
-      );
-    } else {
-      if (state && state.startsWith('waiting_')) {
-        return;
-      } else {
-        ctx.session.state = null;
-        ctx.session.orderData = {};
-        await ctx.reply('Bosh menyu', mainMenuKeyboard());
-      }
-    }
+    // Orqaga qaytish
+    await this.backHandler.handleBack(ctx);
   }
 
   @Hears(/.+/)
   async handleText(@Ctx() ctx: Context) {
+    // Matnli xabarlarga javob berish
     if (!ctx.from || !ctx.message || !('text' in ctx.message)) return;
 
-    const state = ctx.session?.state;
     const messageText = ctx.message.text;
 
-    if (state === 'waiting_name') {
-      await this.registrationHandler.handleNameInput(ctx, messageText);
-    } else if (state === 'waiting_from_address_text') {
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        fromAddress: messageText,
-      };
-      ctx.session.state = 'waiting_to_location';
-      await ctx.reply(
-        '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...locationKeyboard() },
-      );
-    } else if (state === 'waiting_to_address_text') {
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        toAddress: messageText,
-      };
-
-      const additionalLocationKeyboard = Markup.keyboard([
-        [{ text: '📍 Qo‘shimcha manzilni yuborish', request_location: true }],
-        [{ text: '✍️ Qo‘shimcha manzilni yozish' }],
-        [{ text: '⏭ Davom etish' }],
-        [{ text: '◀️ Orqaga' }],
-      ]).resize();
-
-      await ctx.reply(
-        'Agar qo‘shimcha manzil bo‘lsa, lokatsiya yuboring. Aks holda "Davom etish" tugmasini bosing:',
-        additionalLocationKeyboard,
-      );
-      ctx.session.state = 'waiting_additional_location_choice';
-    } else if (state === 'waiting_additional_location_text') {
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        additionalAddress: messageText,
-      };
-
-      ctx.session.state = 'waiting_transport_type';
-      await ctx.reply('🚗 *Transport turini tanlang:*', {
-        parse_mode: 'Markdown',
-        ...deliveryTypeKeyboard(),
-      });
-    } else if (state === 'waiting_additional_location_choice') {
-      if (messageText === '⏭ Davom etish') {
-        ctx.session.state = 'waiting_transport_type';
-        // Show only transport type selection
-        await ctx.reply('🚗 *Transport turini tanlang:*', {
-          parse_mode: 'Markdown',
-          ...deliveryTypeKeyboard(),
-        });
-      } else if (messageText === '✍️ Qo‘shimcha manzilni yozish') {
-        await ctx.reply(
-          "✍️ *Qo‘shimcha manzilni yozing:*\n\nMasalan: Toshkent, Chilonzor ko'chasi, 15-uy",
-          { parse_mode: 'Markdown', ...backButtonKeyboard() },
-        );
-        ctx.session.state = 'waiting_additional_location_text';
-      } else {
-        await this.orderHandler.handleText(ctx, messageText);
-      }
-    } else {
-      await this.orderHandler.handleText(ctx, messageText);
+    // Orqaga qaytish
+    if (messageText === '◀️ Orqaga') {
+      await this.backHandler.handleBack(ctx);
+      return;
     }
+
+    // Bosh menyuga qaytish
+    if (messageText === '🏠 Bosh menyu') {
+      ctx.session.state = null;
+      ctx.session.orderData = {};
+      await ctx.reply('Bosh menyu', mainMenuKeyboard());
+      return;
+    }
+
+    // Davom etish
+    if (messageText === '⏭ Davom etish') {
+      const state = ctx.session?.state;
+      // Mahsulotlar uchun manzil kiritish jarayonida davom etish
+      if (state && state.startsWith('waiting_product_location_')) {
+        // Handle continue logic in text handler
+        await this.textHandler.handleText(ctx, messageText);
+        return;
+      }
+    }
+
+    await this.textHandler.handleText(ctx, messageText);
   }
 
   @On('contact')
   async handleUserContact(@Ctx() ctx: Context) {
+    // Kontakt ma'lumotlarini qabul qilish
+    if (!ctx.from || !ctx.message || !('contact' in ctx.message)) return;
+
     const state = ctx.session?.state;
 
     if (state === 'waiting_phone_contact') {
       await this.registrationHandler.handlePhoneContact(ctx);
+    } else if (state === 'waiting_phone') {
+      await this.orderHandler.handlePhone(ctx);
     } else {
-      await this.orderHandler.handleUserContact(ctx);
+      await this.contactHandler.handleUserContact(ctx);
     }
   }
 
   @On('location')
   async handleUserLocation(@Ctx() ctx: Context) {
+    // Lokatsiya ma'lumotlarini qabul qilish
+    if (!ctx.from || !ctx.message || !('location' in ctx.message)) return;
+
     const state = ctx.session?.state;
 
-    if (!ctx.message || !('location' in ctx.message)) return;
-
-    if (state === 'waiting_from_location') {
-      const location = ctx.message.location;
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        fromAddress: `Lokatsiya: ${location.latitude}, ${location.longitude}`,
-      };
-      ctx.session.state = 'waiting_to_location';
-      await ctx.reply(
-        '📍 *Qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring yoki manzilni yozing:',
-        { parse_mode: 'Markdown', ...locationKeyboard() },
-      );
-    } else if (state === 'waiting_to_location') {
-      const location = ctx.message.location;
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        toAddress: `Lokatsiya: ${location.latitude}, ${location.longitude}`,
-      };
-
-      const additionalLocationKeyboard = Markup.keyboard([
-        [{ text: '📍 Qo‘shimcha manzilni yuborish', request_location: true }],
-        [{ text: '✍️ Qo‘shimcha manzilni yozish' }],
-        [{ text: '⏭ Davom etish' }],
-        [{ text: '◀️ Orqaga' }],
-      ]).resize();
-
-      await ctx.reply(
-        'Agar qo‘shimcha manzil bo‘lsa, lokatsiya yuboring. Aks holda "Davom etish" tugmasini bosing:',
-        additionalLocationKeyboard,
-      );
-      ctx.session.state = 'waiting_additional_location_choice';
-    } else if (state === 'waiting_additional_location') {
-      const location = ctx.message.location;
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        additionalAddress: `Lokatsiya: ${location.latitude}, ${location.longitude}`,
-      };
-
-      ctx.session.state = 'waiting_transport_type';
-      // Show only transport type selection
-      await ctx.reply('🚗 *Transport turini tanlang:*', {
-        parse_mode: 'Markdown',
-        ...deliveryTypeKeyboard(),
-      });
-    } else if (state === 'waiting_additional_location_choice') {
-      const location = ctx.message.location;
-      ctx.session.orderData = {
-        ...ctx.session.orderData,
-        additionalAddress: `Lokatsiya: ${location.latitude}, ${location.longitude}`,
-      };
-
-      ctx.session.state = 'waiting_transport_type';
-      // Show only transport type selection
-      await ctx.reply('🚗 *Transport turini tanlang:*', {
-        parse_mode: 'Markdown',
-        ...deliveryTypeKeyboard(),
-      });
+    if (
+      state === 'waiting_from_location' ||
+      state === 'waiting_to_location' ||
+      state === 'waiting_additional_location' ||
+      state === 'waiting_additional_location_choice' ||
+      (state && state.startsWith('waiting_product_location_'))
+    ) {
+      await this.locationHandler.handleUserLocation(ctx);
     } else {
-      await this.orderHandler.handleUserLocation(ctx);
+      await this.locationHandler.handleUserLocation(ctx);
     }
+  }
+
+  @Action(/accept_\d+_\d+/)
+  async handleAcceptOrder(@Ctx() ctx: Context) {
+    // Buyurtmani qabul qilish
+    if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
+    
+    const callbackData = ctx.callbackQuery.data;
+    const [, orderId, userId] = callbackData.split('_');
+    
+    // Xabarni yangilash - buyurtma qabul qilinganligini ko'rsatish
+    const message = ctx.callbackQuery.message;
+    if (message && 'text' in message) {
+      const updatedText = `${message.text}\n\n✅ *Buyurtma qabul qilindi!*`;
+      await ctx.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        updatedText,
+        { parse_mode: 'Markdown' }
+      );
+    }
+    
+    // Foydalanuvchiga xabar yuborish
+    try {
+      await ctx.telegram.sendMessage(
+        parseInt(userId),
+        '🎉 Sizning buyurtmangiz qabul qilindi! Tez orada haydovchi siz bilan bog\'lanadi.',
+        { parse_mode: 'Markdown' }
+      );
+    } catch (error) {
+      console.error('Error sending message to user:', error);
+    }
+    
+    // Callback query ga javob berish
+    await ctx.answerCbQuery('Buyurtma qabul qilindi!');
+  }
+
+  @Action(/reject_\d+_\d+/)
+  async handleRejectOrder(@Ctx() ctx: Context) {
+    // Buyurtmani rad etish
+    if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
+    
+    const callbackData = ctx.callbackQuery.data;
+    const [, orderId, userId] = callbackData.split('_');
+    
+    // Xabarni yangilash - buyurtma rad etilganligini ko'rsatish
+    const message = ctx.callbackQuery.message;
+    if (message && 'text' in message) {
+      const updatedText = `${message.text}\n\n❌ *Buyurtma rad etildi*`;
+      await ctx.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        updatedText,
+        { parse_mode: 'Markdown' }
+      );
+    }
+    
+    // Foydalanuvchiga xabar yuborish
+    try {
+      await ctx.telegram.sendMessage(
+        parseInt(userId),
+        '😔 Sizning buyurtmangiz rad etildi. Iltimos, keyinroq qayta urinib ko\'ring.',
+        { parse_mode: 'Markdown' }
+      );
+    } catch (error) {
+      console.error('Error sending message to user:', error);
+    }
+    
+    // Callback query ga javob berish
+    await ctx.answerCbQuery('Buyurtma rad etildi!');
   }
 }

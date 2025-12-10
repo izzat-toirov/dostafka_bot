@@ -16,6 +16,8 @@ export interface SessionData {
     phone?: string;
     comment?: string;
     paymentMethod?: string;
+    productCount?: number;
+    productLocations?: Record<number, string>;
   };
 }
 

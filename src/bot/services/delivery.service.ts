@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class DeliveryService {
+  // Yangi yetkazib berish yaratish
   async createDelivery(userId: number, from: string, to: string) {
     // TODO: Implement delivery creation logic
     console.log(`Creating delivery for user ${userId} from ${from} to ${to}`);
@@ -15,12 +16,14 @@ export class DeliveryService {
     };
   }
 
+  // Foydalanuvchining yetkazib berishlarini olish
   async getUserDeliveries(userId: number) {
     // TODO: Implement get user deliveries logic
     console.log(`Getting deliveries for user ${userId}`);
     return [];
   }
 
+  // Narxlarni qaytarish
   async getPricing() {
     return `💰 Bizning narxlar:
 

@@ -1,15 +1,17 @@
-# Telegram Bot Instructions / Bot ishlatish yo'riqnomasi
+# Dostafka Telegram Bot - Yo'riqnoma
 
-## Setup / O'rnatish
+## O'rnatish
 
-1. **Install dependencies / Kutubxonalarni o'rnatish:**
+1. **Kutubxonalarni o'rnatish:**
+
    ```bash
    npm install
    ```
 
-2. **Configure bot token / Bot tokenini sozlash:**
-   
-   `.env` faylini oching va o'z bot tokeningizni kiriting:
+2. **Bot tokenini sozlash:**
+
+   `.env` fayliga o'z bot tokeningizni kiriting:
+
    ```
    BOT_TOKEN=your_actual_bot_token_here
    ```
@@ -21,54 +23,69 @@
    - Username kiriting (dostafka_bot kabi)
    - Olingan tokenni `.env` fayliga joylashtiring
 
-3. **Run the bot / Botni ishga tushirish:**
+3. **Botni ishga tushirish:**
    ```bash
    npm run start:dev
    ```
 
-## Project Structure / Loyiha tuzilishi
+## Loyiha tuzilishi
 
 ```
 src/
+├── main.ts                 # Asosiy kirish nuqtasi
+├── app.module.ts           # Asosiy modul
 └── bot/
-    ├── bot.module.ts              # Bot moduli
-    ├── bot.update.ts              # Bot handlerlari (Start, Hears, Actions)
+    ├── bot.module.ts       # Bot moduli
+    ├── bot.update.ts       # Telegram xabarlarini qayta ishlash
     ├── keyboards/
-    │   └── menu.keyboard.ts       # Keyboard tugmalari
+    │   └── menu.keyboard.ts # Tugmalar
+    ├── handlers/
+    │   ├── order.handler.ts  # Buyurtma bilan ishlash
+    │   ├── info.handler.ts   # Ma'lumotlar bilan ishlash
+    │   └── registration.handler.ts # Ro'yxatdan o'tish
     ├── interfaces/
-    │   └── context.interface.ts   # Context va Session interfaceslari
+    │   └── context.interface.ts # Kontekst interfeysi
     └── services/
-        ├── delivery.service.ts    # Yetkazib berish servisi
-        └── order.service.ts       # Buyurtma servisi
+        ├── delivery.service.ts   # Yetkazib berish servisi
+        ├── order.service.ts      # Buyurtma servisi
+        └── company-info.service.ts # Kompaniya ma'lumotlari
 ```
 
-## Features / Imkoniyatlar
+## Asosiy imkoniyatlar
 
-✅ **Buyurtma berish menusi:**
-- Биз ҳақимизда (О нас) - Kompaniya haqida ma'lumot
-- Мулоқат ўрнатиш (Оставить отзыв) - Fikr-mulohaza qoldirish
-- Манзилимиз (Наш адрес) - Manzil ko'rsatish
-- Рўйхатдан ўтиш (Регистрация) - Foydalanuvchi ro'yxatdan o'tishi
+✅ **Buyurtma berish:**
 
-✅ **Yetkazib berish bo'limi:**
-- Manzil kiritish
-- Buyurtmalar tarixi
-- Narxlar ko'rish
+- Yetkazib berish manzilini kiritish
+- Yuk turi va vaznini tanlash
+- Transport turini tanlash
+- Bog'lanish uchun telefon raqam
+
+✅ **Ma'lumotlar bo'limi:**
+
+- Kompaniya haqida ma'lumot
+- Aloqa ma'lumotlari
+- Kompaniya manzili (geolokatsiya bilan)
+
+✅ **Ro'yxatdan o'tish:**
+
+- Ism va telefon raqam orqali ro'yxatdan o'tish
 
 ✅ **Sozlamalar:**
-- Til tanlash (O'zbekcha/Русский)
 
-## Next Steps / Keyingi qadamlar
+- Til tanlash (O'zbekcha/Ruscha)
 
-1. **Database qo'shish** - Prisma yoki TypeORM orqali ma'lumotlar bazasini qo'shish
-2. **Payment integration** - To'lov tizimini integratsiya qilish
-3. **Location handling** - Geolokatsiya bilan ishlash
-4. **Admin panel** - Admin uchun panel yaratish
-5. **Notifications** - Xabarlar yuborish funksiyasi
+## Keyingi qadamlar
 
-## Customization / Sozlash
+1. **Ma'lumotlar bazasini qo'shish** - Buyurtmalar va foydalanuvchilarni saqlash uchun
+2. **To'lov tizimini integratsiya qilish** - Buyurtma to'lovini amalga oshirish
+3. **Admin panel yaratish** - Buyurtmalarni boshqarish uchun
+4. **Xabarlar yuborish funksiyasi** - Foydalanuvchilarga yangiliklar yuborish
 
-Menuларni o'zgartirish uchun:
+## Sozlash
+
+Menyularni o'zgartirish uchun:
+
 - `src/bot/keyboards/menu.keyboard.ts` - Tugmalarni tahrirlash
-- `src/bot/bot.update.ts` - Handler funksiyalarini o'zgartirish
+- `src/bot/bot.update.ts` - Xabarlar bilan ishlash
+- `src/bot/handlers/` - Mantiqni kengaytirish
 - `src/bot/services/` - Biznes logikani yozish

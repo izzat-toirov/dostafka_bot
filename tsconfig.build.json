@@ -1,4 +1,7 @@
 {
+  // Asosiy tsconfig.json faylidan meros olish
   "extends": "./tsconfig.json",
+  
+  // Build jarayonida istisno qilinishi kerak bo'lgan papkalar
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
