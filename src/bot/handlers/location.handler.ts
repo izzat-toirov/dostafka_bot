@@ -8,12 +8,13 @@ import {
   cargoTypeKeyboard,
 } from '../keyboards/menu.keyboard';
 import { Markup } from 'telegraf';
+import { OrdersService } from '../../orders/orders.service';
 
 export class LocationHandler {
   private readonly orderHandler: OrderHandler;
 
-  constructor(orderService: OrderService) {
-    this.orderHandler = new OrderHandler(orderService);
+  constructor(orderService: OrderService, ordersService: OrdersService) {
+    this.orderHandler = new OrderHandler(orderService, ordersService);
   }
 
   // Lokatsiya ma'lumotlarini qabul qilish
@@ -87,7 +88,9 @@ export class LocationHandler {
       const productCount = ctx.session.orderData.productCount || 1;
       if (productIndex < productCount) {
         await ctx.reply(
-          `📍 *${productIndex + 1}-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
+          `📍 *${
+            productIndex + 1
+          }-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
           {
             parse_mode: 'Markdown',
             ...Markup.keyboard([
@@ -122,7 +125,9 @@ export class LocationHandler {
       const productCount = ctx.session.orderData.productCount || 1;
       if (productIndex < productCount) {
         await ctx.reply(
-          `📍 *${productIndex + 1}-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
+          `📍 *${
+            productIndex + 1
+          }-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
           {
             parse_mode: 'Markdown',
             ...Markup.keyboard([

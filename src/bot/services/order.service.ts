@@ -82,14 +82,16 @@ export class OrderService {
           email: '',
           createdAt: new Date(),
           updatedAt: new Date(),
-          isActive: true
+          isActive: true,
         } as User;
       }
 
       // Kanal ID ni olish
       const channelId = this.configService.get('ORDERS_CHANNEL_ID');
       if (!channelId) {
-        console.error('ORDERS_CHANNEL_ID not configured in environment variables');
+        console.error(
+          'ORDERS_CHANNEL_ID not configured in environment variables',
+        );
         return;
       }
 
@@ -131,18 +133,24 @@ ${orderData.comment ? `📝 *Izoh:* ${orderData.comment}` : ''}
         const bot = new Telegraf(botToken);
         // Buyurtma ID generatsiya qilish (vaqt tamg'asi bo'yicha)
         const orderId = Date.now().toString();
-        
+
         // Tugmachalar bilan xabar yuborish
         await bot.telegram.sendMessage(channelId, orderMessage, {
           parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [
               [
-                { text: '✅ Qabul qilish', callback_data: `accept_${orderId}_${userId}` },
-                { text: '❌ Qabul qilmaslik', callback_data: `reject_${orderId}_${userId}` }
-              ]
-            ]
-          }
+                {
+                  text: '✅ Qabul qilish',
+                  callback_data: `accept_${orderId}_${userId}`,
+                },
+                {
+                  text: '❌ Qabul qilmaslik',
+                  callback_data: `reject_${orderId}_${userId}`,
+                },
+              ],
+            ],
+          },
         });
         console.log('Order sent to channel successfully with buttons');
       } else {

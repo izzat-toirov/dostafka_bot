@@ -10,9 +10,14 @@ import {
   mainMenuKeyboard,
 } from '../keyboards/menu.keyboard';
 import { OrderService } from '../services/order.service';
+import { OrdersService } from '../../orders/orders.service';
+import { OrderStatus } from '../../orders/entities/order.entity';
 
 export class OrderHandler {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly ordersService: OrdersService,
+  ) {}
 
   async handleOrderDelivery(ctx: Context) {
     // Buyurtma berish jarayonini boshlash
@@ -97,7 +102,9 @@ export class OrderHandler {
       const productCount = ctx.session.orderData.productCount || 1;
       if (productIndex < productCount) {
         await ctx.reply(
-          `📍 *${productIndex + 1}-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
+          `📍 *${
+            productIndex + 1
+          }-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
           {
             parse_mode: 'Markdown',
             ...Markup.keyboard([
@@ -135,7 +142,9 @@ export class OrderHandler {
       const productCount = ctx.session.orderData.productCount || 1;
       if (productIndex < productCount) {
         await ctx.reply(
-          `📍 *${productIndex + 1}-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
+          `📍 *${
+            productIndex + 1
+          }-mahsulotni qayerga yetkazib berish kerak?*\n\nLokatsiyani yuboring, manzilni yozing yoki "Davom etish" tugmasini bosing:`,
           {
             parse_mode: 'Markdown',
             ...Markup.keyboard([
@@ -423,6 +432,33 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
     await this.orderService.sendOrderToChannel(order, ctx.from.id);
 
     await this.orderService.saveReview(ctx.from.id, JSON.stringify(order));
+
+    // Buyurtmani database'ga saqlash
+    try {
+      // Barcha mahsulotlar lokatsiyalarini yig'ish
+      let deliveryAddresses = `${order.fromAddress} -> ${order.toAddress}`;
+      if (order.productLocations) {
+        deliveryAddresses += '\nMahsulotlar:\n';
+        for (const [index, location] of Object.entries(
+          order.productLocations,
+        )) {
+          deliveryAddresses += `${index}-mahsulot: ${location}\n`;
+        }
+      }
+
+      const orderData = {
+        userId: ctx.from.id,
+        productName: order.cargoType || 'Yetkazib berish',
+        quantity: order.productCount || 1,
+        deliveryAddress: deliveryAddresses,
+        totalPrice: 0, // Narxni hisoblash kerak, hozircha 0
+        status: OrderStatus.PENDING,
+      };
+
+      await this.ordersService.createOrder(orderData);
+    } catch (error) {
+      console.error('Error saving order to database:', error);
+    }
 
     ctx.session.state = null;
     ctx.session.orderData = {};

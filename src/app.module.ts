@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import LocalSession from 'telegraf-session-local';
 import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
+import { OrdersModule } from './orders/orders.module';
 
 // Lokal sessiya konfiguratsiyasi
 const localSession = new LocalSession({ database: 'sessions.json' });
@@ -21,6 +22,8 @@ const localSession = new LocalSession({ database: 'sessions.json' });
     DatabaseModule,
     // Users module
     UsersModule,
+    // Orders module
+    OrdersModule,
     // Telegraf moduli (Telegram bot uchun)
     TelegrafModule.forRoot({
       token: process.env.BOT_TOKEN || '',

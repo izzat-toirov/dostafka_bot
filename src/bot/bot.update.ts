@@ -4,6 +4,7 @@ import type { Context } from './interfaces/context.interface';
 import { DeliveryService } from './services/delivery.service';
 import { OrderService } from './services/order.service';
 import { CompanyInfoService } from './services/company-info.service';
+import { OrdersService } from '../orders/orders.service';
 import {
   mainMenuKeyboard,
   deliveryMenuKeyboard,
@@ -35,14 +36,15 @@ export class BotUpdate {
     private readonly deliveryService: DeliveryService,
     private readonly orderService: OrderService,
     private readonly companyInfoService: CompanyInfoService,
+    private readonly ordersService: OrdersService,
   ) {
-    this.orderHandler = new OrderHandler(orderService);
-    this.infoHandler = new InfoHandler(companyInfoService);
+    this.orderHandler = new OrderHandler(orderService, ordersService);
+    this.infoHandler = new InfoHandler(companyInfoService, ordersService);
     this.registrationHandler = new RegistrationHandler(orderService);
     this.backHandler = new BackHandler();
-    this.textHandler = new TextHandler(orderService);
-    this.contactHandler = new ContactHandler(orderService);
-    this.locationHandler = new LocationHandler(orderService);
+    this.textHandler = new TextHandler(orderService, ordersService);
+    this.contactHandler = new ContactHandler(orderService, ordersService);
+    this.locationHandler = new LocationHandler(orderService, ordersService);
   }
 
   @Start()
@@ -235,10 +237,10 @@ export class BotUpdate {
   async handleAcceptOrder(@Ctx() ctx: Context) {
     // Buyurtmani qabul qilish
     if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
-    
+
     const callbackData = ctx.callbackQuery.data;
     const [, orderId, userId] = callbackData.split('_');
-    
+
     // Xabarni yangilash - buyurtma qabul qilinganligini ko'rsatish
     const message = ctx.callbackQuery.message;
     if (message && 'text' in message) {
@@ -248,21 +250,21 @@ export class BotUpdate {
         message.message_id,
         undefined,
         updatedText,
-        { parse_mode: 'Markdown' }
+        { parse_mode: 'Markdown' },
       );
     }
-    
+
     // Foydalanuvchiga xabar yuborish
     try {
       await ctx.telegram.sendMessage(
         parseInt(userId),
-        '🎉 Sizning buyurtmangiz qabul qilindi! Tez orada haydovchi siz bilan bog\'lanadi.',
-        { parse_mode: 'Markdown' }
+        "🎉 Sizning buyurtmangiz qabul qilindi! Tez orada haydovchi siz bilan bog'lanadi.",
+        { parse_mode: 'Markdown' },
       );
     } catch (error) {
       console.error('Error sending message to user:', error);
     }
-    
+
     // Callback query ga javob berish
     await ctx.answerCbQuery('Buyurtma qabul qilindi!');
   }
@@ -271,10 +273,10 @@ export class BotUpdate {
   async handleRejectOrder(@Ctx() ctx: Context) {
     // Buyurtmani rad etish
     if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
-    
+
     const callbackData = ctx.callbackQuery.data;
     const [, orderId, userId] = callbackData.split('_');
-    
+
     // Xabarni yangilash - buyurtma rad etilganligini ko'rsatish
     const message = ctx.callbackQuery.message;
     if (message && 'text' in message) {
@@ -284,21 +286,21 @@ export class BotUpdate {
         message.message_id,
         undefined,
         updatedText,
-        { parse_mode: 'Markdown' }
+        { parse_mode: 'Markdown' },
       );
     }
-    
+
     // Foydalanuvchiga xabar yuborish
     try {
       await ctx.telegram.sendMessage(
         parseInt(userId),
-        '😔 Sizning buyurtmangiz rad etildi. Iltimos, keyinroq qayta urinib ko\'ring.',
-        { parse_mode: 'Markdown' }
+        "😔 Sizning buyurtmangiz rad etildi. Iltimos, keyinroq qayta urinib ko'ring.",
+        { parse_mode: 'Markdown' },
       );
     } catch (error) {
       console.error('Error sending message to user:', error);
     }
-    
+
     // Callback query ga javob berish
     await ctx.answerCbQuery('Buyurtma rad etildi!');
   }

@@ -8,10 +8,11 @@ import { TextHandler } from './handlers/text.handler';
 import { ContactHandler } from './handlers/contact.handler';
 import { LocationHandler } from './handlers/location.handler';
 import { UsersModule } from '../users/users.module';
+import { OrdersModule } from '../orders/orders.module';
 
 // Bot moduli - Telegram bot uchun asosiy modul
 @Module({
-  imports: [UsersModule],
+  imports: [UsersModule, OrdersModule],
   // Bot uchun kerakli servis va yangilanishlarni ro'yxatga olish
   providers: [
     BotUpdate,

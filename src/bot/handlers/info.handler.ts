@@ -1,19 +1,60 @@
 import { Context } from '../interfaces/context.interface';
 import { Markup } from 'telegraf';
 import { CompanyInfoService } from '../services/company-info.service';
+import { OrdersService } from '../../orders/orders.service';
 
 export class InfoHandler {
-  constructor(private readonly companyInfoService: CompanyInfoService) {}
+  constructor(
+    private readonly companyInfoService: CompanyInfoService,
+    private readonly ordersService: OrdersService,
+  ) {}
 
   async handleMyOrders(ctx: Context) {
     // Foydalanuvchining buyurtmalarini ko'rsatish
-    await ctx.reply(
-      "📦 *Sizning buyurtmalaringiz:*\n\nTez orada bu yerda buyurtmalar tarixi ko'rsatiladi.",
-      {
+    if (!ctx.from) return;
+
+    try {
+      const orders = await this.ordersService.findAllOrders();
+      const userOrders = orders.filter(
+        (order) => order.userId === ctx.from!.id,
+      );
+
+      if (userOrders.length === 0) {
+        await ctx.reply(
+          "📦 *Sizning buyurtmalaringiz:*\n\nHozircha buyurtmalar yo'q.",
+          {
+            parse_mode: 'Markdown',
+            ...this.backButtonKeyboard(),
+          },
+        );
+        return;
+      }
+
+      let ordersText = '📦 *Sizning buyurtmalaringiz:*\n\n';
+
+      for (const order of userOrders) {
+        ordersText += `ID: ${order.id}\n`;
+        ordersText += `Mahsulot: ${order.productName}\n`;
+        ordersText += `Miqdori: ${order.quantity}\n`;
+        ordersText += `Manzil: ${order.deliveryAddress}\n`;
+        ordersText += `Holati: ${order.status}\n`;
+        ordersText += `Sana: ${order.createdAt.toLocaleString()}\n\n`;
+      }
+
+      await ctx.reply(ordersText, {
         parse_mode: 'Markdown',
         ...this.backButtonKeyboard(),
-      },
-    );
+      });
+    } catch (error) {
+      console.error('Error fetching user orders:', error);
+      await ctx.reply(
+        "❌ Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.",
+        {
+          parse_mode: 'Markdown',
+          ...this.backButtonKeyboard(),
+        },
+      );
+    }
   }
 
   async handleSettings(ctx: Context) {
