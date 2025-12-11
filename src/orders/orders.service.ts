@@ -20,18 +20,37 @@ export class OrdersService {
   }
 
   async findOrderById(id: number): Promise<Order | null> {
-    return this.ordersRepository.findOne({ where: { id } });
+    // createQueryBuilder dan foydalanish
+    return this.ordersRepository
+      .createQueryBuilder('order')
+      .where('order.id = :id', { id: id.toString() })
+      .getOne();
   }
 
   async updateOrderStatus(
     id: number,
     status: OrderStatus,
   ): Promise<Order | null> {
-    await this.ordersRepository.update(id, { status });
+    // id ni string sifatida konvert qilish
+    await this.ordersRepository
+      .createQueryBuilder()
+      .update(Order)
+      .set({
+        status,
+        isActive: status === OrderStatus.CONFIRMED ? true : false,
+      })
+      .where('id = :id', { id: id.toString() })
+      .execute();
+
     return this.findOrderById(id);
   }
 
   async deleteOrder(id: number): Promise<void> {
-    await this.ordersRepository.delete(id);
+    await this.ordersRepository
+      .createQueryBuilder()
+      .delete()
+      .from(Order)
+      .where('id = :id', { id: id.toString() })
+      .execute();
   }
 }

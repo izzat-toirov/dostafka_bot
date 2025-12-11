@@ -142,11 +142,15 @@ ${orderData.comment ? `📝 *Izoh:* ${orderData.comment}` : ''}
               [
                 {
                   text: '✅ Qabul qilish',
-                  callback_data: `accept_${orderId}_${userId}`,
-                },
-                {
-                  text: '❌ Qabul qilmaslik',
-                  callback_data: `reject_${orderId}_${userId}`,
+                  callback_data:
+                    'accept_' +
+                    orderId +
+                    '_' +
+                    userId +
+                    '_' +
+                    orderData.fromLatitude +
+                    '_' +
+                    orderData.fromLongitude,
                 },
               ],
             ],
@@ -158,6 +162,63 @@ ${orderData.comment ? `📝 *Izoh:* ${orderData.comment}` : ''}
       }
     } catch (error) {
       console.error('Error sending order to channel:', error);
+    }
+  }
+
+  // Guruhga foydalanuvchi ma'lumotlarini yuborish
+  async sendUserInfoToGroup(userInfo: any, groupId: string) {
+    try {
+      const botToken = this.configService.get('BOT_TOKEN');
+      if (botToken) {
+        const bot = new Telegraf(botToken);
+
+        // Foydalanuvchi ma'lumotlarini formatlash
+        let userMessage =
+          "👤 *Foydalanuvchi ma'lumotlari:*\n" +
+          '👤 *Ism:* ' +
+          userInfo.name +
+          '\n' +
+          '📱 *Telefon:* ' +
+          userInfo.phone +
+          '\n' +
+          '🆔 *Telegram ID:* ' +
+          userInfo.userId +
+          '\n';
+
+        // Lokatsiya mavjud bo'lsa qo'shish
+        if (userInfo.latitude && userInfo.longitude) {
+          userMessage +=
+            '📍 *Lokatsiya:* https://maps.google.com/?q=' +
+            userInfo.latitude +
+            ',' +
+            userInfo.longitude +
+            '\n';
+        }
+
+        // Guruhga xabar yuborish
+        await bot.telegram.sendMessage(groupId, userMessage, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '✅ Ruxsat berish',
+                  callback_data: 'approve_' + userInfo.userId,
+                },
+                {
+                  text: '❌ Ruxsat bermaslik',
+                  callback_data: 'deny_' + userInfo.userId,
+                },
+              ],
+            ],
+          },
+        });
+        console.log('User info sent to group successfully with buttons');
+      } else {
+        console.error('BOT_TOKEN not found in environment variables');
+      }
+    } catch (error) {
+      console.error('Error sending user info to group:', error);
     }
   }
 }

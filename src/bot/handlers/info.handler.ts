@@ -2,6 +2,7 @@ import { Context } from '../interfaces/context.interface';
 import { Markup } from 'telegraf';
 import { CompanyInfoService } from '../services/company-info.service';
 import { OrdersService } from '../../orders/orders.service';
+import { OrderStatus } from '../../orders/entities/order.entity';
 
 export class InfoHandler {
   constructor(
@@ -10,18 +11,31 @@ export class InfoHandler {
   ) {}
 
   async handleMyOrders(ctx: Context) {
+    // Foydalanuvchi tizimga kirganini tekshirish
+    if (!ctx.session.isLoggedIn) {
+      await ctx.reply(
+        "❌ Buyurtmalarni ko'rish uchun tizimga kirishingiz kerak.\n\nQuyidagi tugmani bosing:",
+        this.mainMenuKeyboard(),
+      );
+      return;
+    }
+
     // Foydalanuvchining buyurtmalarini ko'rsatish
     if (!ctx.from) return;
 
     try {
       const orders = await this.ordersService.findAllOrders();
+      // Faqat ruxsat berilgan (confirmed) va active buyurtmalarni ko'rsatish
       const userOrders = orders.filter(
-        (order) => order.userId === ctx.from!.id,
+        (order) =>
+          order.userId === ctx.from!.id &&
+          order.status === OrderStatus.CONFIRMED &&
+          order.isActive === true,
       );
 
       if (userOrders.length === 0) {
         await ctx.reply(
-          "📦 *Sizning buyurtmalaringiz:*\n\nHozircha buyurtmalar yo'q.",
+          "📦 *Sizning ruxsat berilgan buyurtmalaringiz:*\n\nHozircha ruxsat berilgan buyurtmalar yo'q.",
           {
             parse_mode: 'Markdown',
             ...this.backButtonKeyboard(),
@@ -30,7 +44,7 @@ export class InfoHandler {
         return;
       }
 
-      let ordersText = '📦 *Sizning buyurtmalaringiz:*\n\n';
+      let ordersText = '📦 *Sizning ruxsat berilgan buyurtmalaringiz:*\n\n';
 
       for (const order of userOrders) {
         ordersText += `ID: ${order.id}\n`;
@@ -55,19 +69,6 @@ export class InfoHandler {
         },
       );
     }
-  }
-
-  async handleSettings(ctx: Context) {
-    // Sozlamalar menyusini ko'rsatish
-    await ctx.reply('⚙️ Sozlamalar\n\nTilni tanlang / Выберите язык:', {
-      reply_markup: {
-        keyboard: [
-          [{ text: "🇺🇿 O'zbekcha" }, { text: '🇷🇺 Русский' }],
-          [{ text: '◀️ Orqaga' }],
-        ],
-        resize_keyboard: true,
-      },
-    });
   }
 
   async handleAboutUs(ctx: Context) {
@@ -155,7 +156,7 @@ ${locationInfo.reference}
         { text: "📞 Muloqat o'rnatish" },
         { text: '📍 Manzilimiz' },
       ],
-      [{ text: '🚚 Yetkazib berish' }, { text: '⚙️ Sozlamalar' }],
+      [{ text: '📦 Buyurtmalarim' }],
       [{ text: "📝 Ro'yxatdan o'tish" }],
     ]).resize();
   }

@@ -1,18 +1,49 @@
 {
   "sessions": [
     {
-      "id": "6779915471:6779915471",
+      "id": "-1003364162267:6779915471",
+      "data": {
+        "__scenes": {}
+      }
+    },
+    {
+      "id": "-4993280710:6779915471",
+      "data": {
+        "__scenes": {}
+      }
+    },
+    {
+      "id": "-1003333955152:6779915471",
+      "data": {
+        "__scenes": {}
+      }
+    },
+    {
+      "id": "-1003333955152:1087968824",
+      "data": {
+        "__scenes": {}
+      }
+    },
+    {
+      "id": "5300263228:5300263228",
       "data": {
         "__scenes": {},
         "state": null,
         "orderData": {},
-        "userName": "Izzat"
+        "userName": "Izzat2",
+        "hasVisitedBefore": true,
+        "isLoggedIn": true
       }
     },
     {
-      "id": "-1003364162267:6779915471",
+      "id": "6779915471:6779915471",
       "data": {
-        "__scenes": {}
+        "__scenes": {},
+        "state": null,
+        "userName": "Izzat",
+        "hasVisitedBefore": true,
+        "isLoggedIn": true,
+        "orderData": {}
       }
     }
   ]

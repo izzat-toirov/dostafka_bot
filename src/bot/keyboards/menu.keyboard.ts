@@ -9,7 +9,7 @@ export const mainMenuKeyboard = () => {
       { text: "📞 Muloqat o'rnatish" },
       { text: '📍 Manzilimiz' },
     ],
-    [{ text: '🚚 Yetkazib berish' }, { text: '⚙️ Sozlamalar' }],
+    [{ text: '📦 Buyurtmalarim' }],
     [{ text: "📝 Ro'yxatdan o'tish" }],
   ]).resize();
 };

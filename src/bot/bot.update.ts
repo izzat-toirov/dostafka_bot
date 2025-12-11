@@ -5,6 +5,7 @@ import { DeliveryService } from './services/delivery.service';
 import { OrderService } from './services/order.service';
 import { CompanyInfoService } from './services/company-info.service';
 import { OrdersService } from '../orders/orders.service';
+import { UsersService } from '../users/users.service';
 import {
   mainMenuKeyboard,
   deliveryMenuKeyboard,
@@ -21,6 +22,10 @@ import { BackHandler } from './handlers/back.handler';
 import { TextHandler } from './handlers/text.handler';
 import { ContactHandler } from './handlers/contact.handler';
 import { LocationHandler } from './handlers/location.handler';
+import { AcceptOrderHandler } from './handlers/accept-order.handler';
+import { RejectOrderHandler } from './handlers/reject-order.handler';
+import { ApproveUserHandler } from './handlers/approve-user.handler';
+import { DenyUserHandler } from './handlers/deny-user.handler';
 
 @Update()
 export class BotUpdate {
@@ -31,12 +36,17 @@ export class BotUpdate {
   private readonly textHandler: TextHandler;
   private readonly contactHandler: ContactHandler;
   private readonly locationHandler: LocationHandler;
+  private readonly acceptOrderHandler: AcceptOrderHandler;
+  private readonly rejectOrderHandler: RejectOrderHandler;
+  private readonly approveUserHandler: ApproveUserHandler;
+  private readonly denyUserHandler: DenyUserHandler;
 
   constructor(
     private readonly deliveryService: DeliveryService,
     private readonly orderService: OrderService,
     private readonly companyInfoService: CompanyInfoService,
     private readonly ordersService: OrdersService,
+    private readonly usersService: UsersService,
   ) {
     this.orderHandler = new OrderHandler(orderService, ordersService);
     this.infoHandler = new InfoHandler(companyInfoService, ordersService);
@@ -45,19 +55,64 @@ export class BotUpdate {
     this.textHandler = new TextHandler(orderService, ordersService);
     this.contactHandler = new ContactHandler(orderService, ordersService);
     this.locationHandler = new LocationHandler(orderService, ordersService);
+    this.acceptOrderHandler = new AcceptOrderHandler(
+      usersService,
+      orderService,
+      ordersService,
+    );
+    this.rejectOrderHandler = new RejectOrderHandler();
+    this.approveUserHandler = new ApproveUserHandler();
+    this.denyUserHandler = new DenyUserHandler();
   }
 
   @Start()
   async start(@Ctx() ctx: Context) {
-    // Foydalanuvchiga boshlang'ich xabar va menyuni ko'rsatish
-    await ctx.reply(
-      '👋 Assalomu alaykum!\n\nXush kelibsiz! Quyidagi tugmalardan birini tanlang:',
-      mainMenuKeyboard(),
-    );
+    // Foydalanuvchi ro'yxatdan o'tganini tekshirish
+    if (ctx.from) {
+      const userId = ctx.from.id;
+      const user = await this.usersService.findByTelegramId(userId);
+
+      if (!user) {
+        // Foydalanuvchi ro'yxatdan o'tmagan
+        await ctx.reply(
+          "👋 Assalomu alaykum!\n\nBuyurtma berish uchun avval ro'yxatdan o'ting.\n\nQuyidagi tugmani bosing:",
+          mainMenuKeyboard(),
+        );
+        return;
+      }
+
+      // Foydalanuvchi ro'yxatdan o'tgan, session da belgilash
+      ctx.session.hasVisitedBefore = true;
+      ctx.session.isLoggedIn = true;
+
+      // Foydalanuvchi avval kirgan bo'lsa maxsus xabar berish
+      if (ctx.session.hasVisitedBefore) {
+        await ctx.reply(
+          "👋 Assalomu alaykum!\n\nSiz yana ko'rganimizdan hurmatdamiz!\n\nQuyidagi tugmalardan birini tanlang:",
+          mainMenuKeyboard(),
+        );
+        return;
+      }
+
+      // Yangi foydalanuvchi
+      await ctx.reply(
+        '👋 Assalomu alaykum!\n\nXush kelibsiz! Quyidagi tugmalardan birini tanlang:',
+        mainMenuKeyboard(),
+      );
+    }
   }
 
   @Hears('Buyurtma berish (Заказать курьера)')
   async handleOrderDelivery(@Ctx() ctx: Context) {
+    // Foydalanuvchi tizimga kirganini tekshirish
+    if (!ctx.session.isLoggedIn) {
+      await ctx.reply(
+        '❌ Buyurtma berish uchun tizimga kirishingiz kerak.\n\nQuyidagi tugmani bosing:',
+        mainMenuKeyboard(),
+      );
+      return;
+    }
+
     // Buyurtma berish jarayonini boshlash - avval transport turini tanlash
     ctx.session.state = 'waiting_transport_type';
     await ctx.reply('🚗 *Transport turini tanlang:*', {
@@ -114,22 +169,10 @@ export class BotUpdate {
     await this.orderHandler.handleWritePhone(ctx);
   }
 
-  @Hears('🚚 Yetkazib berish')
-  async handleDelivery(@Ctx() ctx: Context) {
-    // Yetkazib berish menyusini ko'rsatish
-    await ctx.reply('🚚 Buyurtmalarim', deliveryMenuKeyboard());
-  }
-
   @Hears('📦 Buyurtmalarim')
   async handleMyOrders(@Ctx() ctx: Context) {
     // Foydalanuvchining buyurtmalarini ko'rsatish
     await this.infoHandler.handleMyOrders(ctx);
-  }
-
-  @Hears('⚙️ Sozlamalar')
-  async handleSettings(@Ctx() ctx: Context) {
-    // Sozlamalar menyusini ko'rsatish
-    await this.infoHandler.handleSettings(ctx);
   }
 
   @Hears('ℹ️ Biz haqimizda')
@@ -233,75 +276,23 @@ export class BotUpdate {
     }
   }
 
-  @Action(/accept_\d+_\d+/)
+  @Action(/accept_\d+_\d+_.+_.+/)
   async handleAcceptOrder(@Ctx() ctx: Context) {
-    // Buyurtmani qabul qilish
-    if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
-
-    const callbackData = ctx.callbackQuery.data;
-    const [, orderId, userId] = callbackData.split('_');
-
-    // Xabarni yangilash - buyurtma qabul qilinganligini ko'rsatish
-    const message = ctx.callbackQuery.message;
-    if (message && 'text' in message) {
-      const updatedText = `${message.text}\n\n✅ *Buyurtma qabul qilindi!*`;
-      await ctx.telegram.editMessageText(
-        message.chat.id,
-        message.message_id,
-        undefined,
-        updatedText,
-        { parse_mode: 'Markdown' },
-      );
-    }
-
-    // Foydalanuvchiga xabar yuborish
-    try {
-      await ctx.telegram.sendMessage(
-        parseInt(userId),
-        "🎉 Sizning buyurtmangiz qabul qilindi! Tez orada haydovchi siz bilan bog'lanadi.",
-        { parse_mode: 'Markdown' },
-      );
-    } catch (error) {
-      console.error('Error sending message to user:', error);
-    }
-
-    // Callback query ga javob berish
-    await ctx.answerCbQuery('Buyurtma qabul qilindi!');
+    await this.acceptOrderHandler.handleAcceptOrder(ctx);
   }
 
   @Action(/reject_\d+_\d+/)
   async handleRejectOrder(@Ctx() ctx: Context) {
-    // Buyurtmani rad etish
-    if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) return;
+    await this.rejectOrderHandler.handleRejectOrder(ctx);
+  }
 
-    const callbackData = ctx.callbackQuery.data;
-    const [, orderId, userId] = callbackData.split('_');
+  @Action(/approve_\d+/)
+  async handleApproveUser(@Ctx() ctx: Context) {
+    await this.approveUserHandler.handleApproveUser(ctx);
+  }
 
-    // Xabarni yangilash - buyurtma rad etilganligini ko'rsatish
-    const message = ctx.callbackQuery.message;
-    if (message && 'text' in message) {
-      const updatedText = `${message.text}\n\n❌ *Buyurtma rad etildi*`;
-      await ctx.telegram.editMessageText(
-        message.chat.id,
-        message.message_id,
-        undefined,
-        updatedText,
-        { parse_mode: 'Markdown' },
-      );
-    }
-
-    // Foydalanuvchiga xabar yuborish
-    try {
-      await ctx.telegram.sendMessage(
-        parseInt(userId),
-        "😔 Sizning buyurtmangiz rad etildi. Iltimos, keyinroq qayta urinib ko'ring.",
-        { parse_mode: 'Markdown' },
-      );
-    } catch (error) {
-      console.error('Error sending message to user:', error);
-    }
-
-    // Callback query ga javob berish
-    await ctx.answerCbQuery('Buyurtma rad etildi!');
+  @Action(/deny_\d+/)
+  async handleDenyUser(@Ctx() ctx: Context) {
+    await this.denyUserHandler.handleDenyUser(ctx);
   }
 }

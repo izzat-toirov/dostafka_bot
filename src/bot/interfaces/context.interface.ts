@@ -4,6 +4,8 @@ export interface SessionData {
   state?: string | null;
   userName?: string;
   userPhone?: string;
+  hasVisitedBefore?: boolean;
+  isLoggedIn?: boolean;
   // Buyurtma ma'lumotlari
   orderData?: {
     fromAddress?: string;
