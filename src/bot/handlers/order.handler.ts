@@ -8,6 +8,7 @@ import {
   phoneKeyboard,
   paymentMethodKeyboard,
   mainMenuKeyboard,
+  mainMenuKeyboardForRegistered,
 } from '../keyboards/menu.keyboard';
 import { OrderService } from '../services/order.service';
 import { OrdersService } from '../../orders/orders.service';
@@ -73,7 +74,7 @@ export class OrderHandler {
       ctx.session.state = 'waiting_weight';
       await ctx.reply(
         "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+        { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
       );
     } else if (state === 'waiting_additional_location_choice') {
       ctx.session.orderData = ctx.session.orderData || {};
@@ -82,7 +83,7 @@ export class OrderHandler {
       ctx.session.state = 'waiting_weight';
       await ctx.reply(
         "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+        { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
       );
     } else if (state && state.startsWith('waiting_product_location_')) {
       // Mahsulotlar uchun manzil kiritish
@@ -221,7 +222,7 @@ export class OrderHandler {
 
     await ctx.reply("⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg", {
       parse_mode: 'Markdown',
-      ...mainMenuKeyboard(),
+      ...mainMenuKeyboardForRegistered(),
     });
   }
 
@@ -425,13 +426,11 @@ ${order.comment ? `📝 *Izoh:* ${order.comment}` : ''}
 
     await ctx.reply(summary, {
       parse_mode: 'Markdown',
-      ...mainMenuKeyboard(),
+      ...mainMenuKeyboardForRegistered(),
     });
 
     // Buyurtmani kanalga yuborish
     await this.orderService.sendOrderToChannel(order, ctx.from.id);
-
-    await this.orderService.saveReview(ctx.from.id, JSON.stringify(order));
 
     // Buyurtmani database'ga saqlash
     try {

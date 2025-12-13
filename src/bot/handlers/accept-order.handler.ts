@@ -25,7 +25,9 @@ export class AcceptOrderHandler {
     // Xabarni yangilash - buyurtma qabul qilinganligini ko'rsatish
     const message = ctx.callbackQuery.message;
     if (message && 'text' in message) {
-      const updatedText = `${message.text}\n\n✅ *Buyurtma qabul qilindi!*`;
+      const updatedText = `${message.text}
+
+✅ *Buyurtma qabul qilindi!*`;
       await ctx.telegram.editMessageText(
         message.chat.id,
         message.message_id,

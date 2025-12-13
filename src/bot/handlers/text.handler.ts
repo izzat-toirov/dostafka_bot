@@ -4,6 +4,7 @@ import { OrderHandler } from './order.handler';
 import { OrderService } from '../services/order.service';
 import {
   mainMenuKeyboard,
+  mainMenuKeyboardForRegistered,
   locationKeyboard,
   backButtonKeyboard,
   cargoTypeKeyboard,
@@ -364,7 +365,7 @@ export class TextHandler {
       ctx.session.state = 'waiting_weight';
       await ctx.reply(
         "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+        { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
       );
     } else if (state === 'waiting_additional_location_choice') {
       if (messageText === '⏭ Davom etish') {
@@ -372,7 +373,7 @@ export class TextHandler {
         ctx.session.state = 'waiting_weight';
         await ctx.reply(
           "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-          { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+          { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
         );
       } else if (messageText === '✍️ Qo‘shimcha manzilni yozish') {
         await ctx.reply(

@@ -3,6 +3,7 @@ import { OrderHandler } from './order.handler';
 import { OrderService } from '../services/order.service';
 import {
   mainMenuKeyboard,
+  mainMenuKeyboardForRegistered,
   locationKeyboard,
   backButtonKeyboard,
   cargoTypeKeyboard,
@@ -44,7 +45,7 @@ export class LocationHandler {
       // Mahsulotlar sonini so'raymiz
       await ctx.reply(
         '📦 *Nechta mahsulot yetkazib berish kerak?*\n\nSonini kiriting (1-10):',
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+        { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
       );
       ctx.session.state = 'waiting_product_count';
     } else if (state === 'waiting_additional_location') {
@@ -58,7 +59,7 @@ export class LocationHandler {
       ctx.session.state = 'waiting_weight';
       await ctx.reply(
         "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+        { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
       );
     } else if (state === 'waiting_additional_location_choice') {
       const location = ctx.message.location;
@@ -71,7 +72,7 @@ export class LocationHandler {
       ctx.session.state = 'waiting_weight';
       await ctx.reply(
         "⚖️ *Yuk og'irligini kiriting:*\n\nMasalan: 5 kg, 10 kg",
-        { parse_mode: 'Markdown', ...mainMenuKeyboard() },
+        { parse_mode: 'Markdown', ...mainMenuKeyboardForRegistered() },
       );
     } else if (state && state.startsWith('waiting_product_location_')) {
       // Mahsulotlar uchun manzil kiritish

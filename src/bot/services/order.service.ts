@@ -25,10 +25,9 @@ export class OrderService {
 Биз билан вақтингизни тежанг! 🚀`;
   }
 
-  // Foydalanuvchi sharhini saqlash
+  // Foydalanuvchi sharhini saqlash - hech qanday ma'lumot saqlanmaydi
   async saveReview(userId: number, review: string) {
-    // TODO: Save review to database
-    console.log(`Review from user ${userId}: ${review}`);
+    // Hech qanday ma'lumot saqlanmaydi
     return true;
   }
 
@@ -120,10 +119,32 @@ export class OrderService {
         orderMessage += `📍 *Qo‘shimcha manzil:* ${orderData.additionalAddress}\n`;
       }
 
+      // Default manzil
+      const defaultLocation =
+        "Toshkent sh., Yunusobod tum., Farobiy ko'chasi, 56-uy";
+
+      // Olib ketadigan manzil (lokatsiya) - agar mavjud bo'lmasa, default manzil
+      const pickupLocation = orderData.fromAddress || defaultLocation;
+
+      // Agar fromAddress lokatsiya bo'lsa, Google Maps link yaratamiz
+      let locationLink = '';
+      if (pickupLocation.includes('Lokatsiya:')) {
+        const coords = pickupLocation.replace('Lokatsiya: ', '').split(', ');
+        if (coords.length === 2) {
+          locationLink = `https://maps.google.com/?q=${coords[0]},${coords[1]}`;
+        }
+      } else {
+        // Agar matnli manzil bo'lsa, Google Maps qidiruv linki
+        locationLink = `https://maps.google.com/?q=${encodeURIComponent(
+          pickupLocation,
+        )}`;
+      }
+
       orderMessage += `📦 *Yuk:* ${orderData.cargoType}
 ⚖️ *Og'irlik:* ${orderData.weight}
 🚗 *Transport:* ${orderData.transportType}
 💳 *To'lov usuli:* ${orderData.paymentMethod}
+📍 *Olib ketish manzili:* [${pickupLocation}](${locationLink})
 ${orderData.comment ? `📝 *Izoh:* ${orderData.comment}` : ''}
 `;
 

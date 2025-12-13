@@ -3,6 +3,7 @@ import { Markup } from 'telegraf';
 import { OrderService } from '../services/order.service';
 import {
   mainMenuKeyboard,
+  mainMenuKeyboardForRegistered,
   backButtonKeyboard,
 } from '../keyboards/menu.keyboard';
 
@@ -54,13 +55,13 @@ export class RegistrationHandler {
           
 Ф.И.Ш: ${user.name}
 Телефон: ${user.phone}`,
-          this.mainMenuKeyboard(),
+          mainMenuKeyboardForRegistered(),
         );
       } catch (error) {
         console.error('Registration error:', error);
         await ctx.reply(
           '❌ Рўйхатдан ўтишда хатолик юз берди. Илтимос, қайтадан уриниб кўринг.',
-          this.mainMenuKeyboard(),
+          mainMenuKeyboard(),
         );
       }
 
@@ -75,5 +76,9 @@ export class RegistrationHandler {
 
   private mainMenuKeyboard() {
     return mainMenuKeyboard();
+  }
+
+  private mainMenuKeyboardForRegistered() {
+    return mainMenuKeyboardForRegistered();
   }
 }

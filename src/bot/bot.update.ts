@@ -1,4 +1,12 @@
-import { Update, Ctx, Start, Action, Hears, On } from 'nestjs-telegraf';
+import {
+  Update,
+  Ctx,
+  Start,
+  Action,
+  Hears,
+  On,
+  Command,
+} from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import type { Context } from './interfaces/context.interface';
 import { DeliveryService } from './services/delivery.service';
@@ -8,6 +16,7 @@ import { OrdersService } from '../orders/orders.service';
 import { UsersService } from '../users/users.service';
 import {
   mainMenuKeyboard,
+  mainMenuKeyboardForRegistered,
   deliveryMenuKeyboard,
   locationKeyboard,
   cargoTypeKeyboard,
@@ -49,7 +58,11 @@ export class BotUpdate {
     private readonly usersService: UsersService,
   ) {
     this.orderHandler = new OrderHandler(orderService, ordersService);
-    this.infoHandler = new InfoHandler(companyInfoService, ordersService);
+    this.infoHandler = new InfoHandler(
+      companyInfoService,
+      ordersService,
+      usersService,
+    );
     this.registrationHandler = new RegistrationHandler(orderService);
     this.backHandler = new BackHandler();
     this.textHandler = new TextHandler(orderService, ordersService);
@@ -89,7 +102,7 @@ export class BotUpdate {
       if (ctx.session.hasVisitedBefore) {
         await ctx.reply(
           "👋 Assalomu alaykum!\n\nSiz yana ko'rganimizdan hurmatdamiz!\n\nQuyidagi tugmalardan birini tanlang:",
-          mainMenuKeyboard(),
+          mainMenuKeyboardForRegistered(),
         );
         return;
       }
@@ -97,7 +110,7 @@ export class BotUpdate {
       // Yangi foydalanuvchi
       await ctx.reply(
         '👋 Assalomu alaykum!\n\nXush kelibsiz! Quyidagi tugmalardan birini tanlang:',
-        mainMenuKeyboard(),
+        mainMenuKeyboardForRegistered(),
       );
     }
   }
@@ -129,6 +142,16 @@ export class BotUpdate {
   @Hears('🚖 Haydovchi chaqirish')
   async handleCallDriver(@Ctx() ctx: Context) {
     // Haydovchi chaqirish funksiyasi
+    if (ctx.from) {
+      const user = await this.usersService.findByTelegramId(ctx.from.id);
+      if (user) {
+        await ctx.reply(
+          '🚖 Haydovchi chaqirilmoqda...',
+          mainMenuKeyboardForRegistered(),
+        );
+        return;
+      }
+    }
     await ctx.reply('🚖 Haydovchi chaqirilmoqda...', mainMenuKeyboard());
   }
 
@@ -169,12 +192,6 @@ export class BotUpdate {
     await this.orderHandler.handleWritePhone(ctx);
   }
 
-  @Hears('📦 Buyurtmalarim')
-  async handleMyOrders(@Ctx() ctx: Context) {
-    // Foydalanuvchining buyurtmalarini ko'rsatish
-    await this.infoHandler.handleMyOrders(ctx);
-  }
-
   @Hears('ℹ️ Biz haqimizda')
   async handleAboutUs(@Ctx() ctx: Context) {
     // Kompaniya haqida ma'lumot
@@ -197,6 +214,29 @@ export class BotUpdate {
   async handleRegistration(@Ctx() ctx: Context) {
     // Foydalanuvchini ro'yxatdan o'tkazish
     await this.registrationHandler.handleRegistration(ctx);
+  }
+
+  @Hears('👤 Profil')
+  async handleProfile(@Ctx() ctx: Context) {
+    // Foydalanuvchi profili
+    if (ctx.from) {
+      const userId = ctx.from.id;
+      const user = await this.usersService.findByTelegramId(userId);
+
+      if (user) {
+        await ctx.reply(
+          `👤 *Sizning profilingiz:*\n\n` +
+            `Ism: ${user.name}\n` +
+            `Telefon: ${user.phone}\n` +
+            `Ro'yxatdan o'tgan sana: ${user.createdAt.toLocaleDateString(
+              'uz-UZ',
+            )}`,
+          { parse_mode: 'Markdown' },
+        );
+      } else {
+        await ctx.reply('❌ Foydalanuvchi topilmadi.');
+      }
+    }
   }
 
   @Hears(['◀️ Orqaga', '◀️ Назад'])
@@ -222,7 +262,17 @@ export class BotUpdate {
     if (messageText === '🏠 Bosh menyu') {
       ctx.session.state = null;
       ctx.session.orderData = {};
-      await ctx.reply('Bosh menyu', mainMenuKeyboard());
+      // Foydalanuvchi ro'yxatdan o'tganligini tekshirish
+      if (ctx.from) {
+        const user = await this.usersService.findByTelegramId(ctx.from.id);
+        if (user) {
+          await ctx.reply('Bosh menyu', mainMenuKeyboardForRegistered());
+        } else {
+          await ctx.reply('Bosh menyu', mainMenuKeyboard());
+        }
+      } else {
+        await ctx.reply('Bosh menyu', mainMenuKeyboard());
+      }
       return;
     }
 
@@ -238,6 +288,27 @@ export class BotUpdate {
     }
 
     await this.textHandler.handleText(ctx, messageText);
+  }
+
+  @Command('clear_orders')
+  async handleClearOrders(@Ctx() ctx: Context) {
+    // Faqat admin foydalanuvchilar buyurtmalarni o'chira oladi
+    // Admin user ID ni tekshirish (bu yerda o'zgartirishingiz mumkin)
+    const adminUserId = 5300263228; // O'zgartiring
+
+    if (ctx.from && ctx.from.id === adminUserId) {
+      try {
+        await this.ordersService.deleteAllOrders();
+        await ctx.reply("✅ Barcha buyurtmalar o'chirildi!");
+      } catch (error) {
+        console.error('Error clearing orders:', error);
+        await ctx.reply(
+          "❌ Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.",
+        );
+      }
+    } else {
+      await ctx.reply("❌ Sizda bu buyruqdan foydalanish huquqi yo'q!");
+    }
   }
 
   @On('contact')

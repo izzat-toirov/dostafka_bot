@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf';
 
-// Asosiy menyuni ko'rsatish
+// Asosiy menyuni ko'rsatish (ro'yxatdan o'tmagan foydalanuvchilar uchun)
 export const mainMenuKeyboard = () => {
   return Markup.keyboard([
     [{ text: 'Buyurtma berish (Заказать курьера)' }],
@@ -9,17 +9,26 @@ export const mainMenuKeyboard = () => {
       { text: "📞 Muloqat o'rnatish" },
       { text: '📍 Manzilimiz' },
     ],
-    [{ text: '📦 Buyurtmalarim' }],
     [{ text: "📝 Ro'yxatdan o'tish" }],
+  ]).resize();
+};
+
+// Asosiy menyuni ko'rsatish (ro'yxatdan o'tgan foydalanuvchilar uchun)
+export const mainMenuKeyboardForRegistered = () => {
+  return Markup.keyboard([
+    [{ text: 'Buyurtma berish (Заказать курьера)' }],
+    [
+      { text: 'ℹ️ Biz haqimizda' },
+      { text: "📞 Muloqat o'rnatish" },
+      { text: '📍 Manzilimiz' },
+    ],
+    [{ text: '👤 Profil' }],
   ]).resize();
 };
 
 // Yetkazib berish menyusi
 export const deliveryMenuKeyboard = () => {
-  return Markup.keyboard([
-    [{ text: '📦 Buyurtmalarim' }],
-    [{ text: '◀️ Orqaga' }],
-  ]).resize();
+  return Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize();
 };
 
 // Yuk turlari

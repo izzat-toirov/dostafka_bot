@@ -53,4 +53,13 @@ export class OrdersService {
       .where('id = :id', { id: id.toString() })
       .execute();
   }
+
+  // Barcha buyurtmalarni o'chirish
+  async deleteAllOrders(): Promise<void> {
+    await this.ordersRepository
+      .createQueryBuilder()
+      .delete()
+      .from(Order)
+      .execute();
+  }
 }

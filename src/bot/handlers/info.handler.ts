@@ -3,73 +3,18 @@ import { Markup } from 'telegraf';
 import { CompanyInfoService } from '../services/company-info.service';
 import { OrdersService } from '../../orders/orders.service';
 import { OrderStatus } from '../../orders/entities/order.entity';
+import {
+  mainMenuKeyboard,
+  mainMenuKeyboardForRegistered,
+} from '../keyboards/menu.keyboard';
+import { UsersService } from '../../users/users.service';
 
 export class InfoHandler {
   constructor(
     private readonly companyInfoService: CompanyInfoService,
     private readonly ordersService: OrdersService,
+    private readonly usersService: UsersService,
   ) {}
-
-  async handleMyOrders(ctx: Context) {
-    // Foydalanuvchi tizimga kirganini tekshirish
-    if (!ctx.session.isLoggedIn) {
-      await ctx.reply(
-        "❌ Buyurtmalarni ko'rish uchun tizimga kirishingiz kerak.\n\nQuyidagi tugmani bosing:",
-        this.mainMenuKeyboard(),
-      );
-      return;
-    }
-
-    // Foydalanuvchining buyurtmalarini ko'rsatish
-    if (!ctx.from) return;
-
-    try {
-      const orders = await this.ordersService.findAllOrders();
-      // Faqat ruxsat berilgan (confirmed) va active buyurtmalarni ko'rsatish
-      const userOrders = orders.filter(
-        (order) =>
-          order.userId === ctx.from!.id &&
-          order.status === OrderStatus.CONFIRMED &&
-          order.isActive === true,
-      );
-
-      if (userOrders.length === 0) {
-        await ctx.reply(
-          "📦 *Sizning ruxsat berilgan buyurtmalaringiz:*\n\nHozircha ruxsat berilgan buyurtmalar yo'q.",
-          {
-            parse_mode: 'Markdown',
-            ...this.backButtonKeyboard(),
-          },
-        );
-        return;
-      }
-
-      let ordersText = '📦 *Sizning ruxsat berilgan buyurtmalaringiz:*\n\n';
-
-      for (const order of userOrders) {
-        ordersText += `ID: ${order.id}\n`;
-        ordersText += `Mahsulot: ${order.productName}\n`;
-        ordersText += `Miqdori: ${order.quantity}\n`;
-        ordersText += `Manzil: ${order.deliveryAddress}\n`;
-        ordersText += `Holati: ${order.status}\n`;
-        ordersText += `Sana: ${order.createdAt.toLocaleString()}\n\n`;
-      }
-
-      await ctx.reply(ordersText, {
-        parse_mode: 'Markdown',
-        ...this.backButtonKeyboard(),
-      });
-    } catch (error) {
-      console.error('Error fetching user orders:', error);
-      await ctx.reply(
-        "❌ Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.",
-        {
-          parse_mode: 'Markdown',
-          ...this.backButtonKeyboard(),
-        },
-      );
-    }
-  }
 
   async handleAboutUs(ctx: Context) {
     // Kompaniya haqida ma'lumot
@@ -88,9 +33,21 @@ ${companyInfo.advantages.map((adv) => `• ${adv}`).join('\n')}
 🌐 *Veb-sayt:* ${companyInfo.website}
     `;
 
+    // Foydalanuvchi ro'yxatdan o'tganligini tekshirish
+    if (ctx.from) {
+      const user = await this.usersService.findByTelegramId(ctx.from.id);
+      if (user) {
+        await ctx.reply(aboutText, {
+          parse_mode: 'Markdown',
+          ...mainMenuKeyboardForRegistered(),
+        });
+        return;
+      }
+    }
+
     await ctx.reply(aboutText, {
       parse_mode: 'Markdown',
-      ...this.mainMenuKeyboard(),
+      ...mainMenuKeyboard(),
     });
   }
 
@@ -115,9 +72,21 @@ ${contactInfo.workHours}
 💬 *Telegram:* ${contactInfo.telegram}
     `;
 
+    // Foydalanuvchi ro'yxatdan o'tganligini tekshirish
+    if (ctx.from) {
+      const user = await this.usersService.findByTelegramId(ctx.from.id);
+      if (user) {
+        await ctx.reply(contactText, {
+          parse_mode: 'Markdown',
+          ...mainMenuKeyboardForRegistered(),
+        });
+        return;
+      }
+    }
+
     await ctx.reply(contactText, {
       parse_mode: 'Markdown',
-      ...this.mainMenuKeyboard(),
+      ...mainMenuKeyboard(),
     });
   }
 
@@ -137,27 +106,26 @@ ${locationInfo.landmark}
 ${locationInfo.reference}
     `;
 
+    // Foydalanuvchi ro'yxatdan o'tganligini tekshirish
+    if (ctx.from) {
+      const user = await this.usersService.findByTelegramId(ctx.from.id);
+      if (user) {
+        await ctx.reply(locationText, {
+          parse_mode: 'Markdown',
+          ...mainMenuKeyboardForRegistered(),
+        });
+        return;
+      }
+    }
+
     await ctx.reply(locationText, {
       parse_mode: 'Markdown',
-      ...this.mainMenuKeyboard(),
+      ...mainMenuKeyboard(),
     });
   }
 
   // Umumiy keyboard metodlari
   private backButtonKeyboard() {
     return Markup.keyboard([[{ text: '◀️ Orqaga' }]]).resize();
-  }
-
-  private mainMenuKeyboard() {
-    return Markup.keyboard([
-      [{ text: 'Buyurtma berish (Заказать курьера)' }],
-      [
-        { text: 'ℹ️ Biz haqimizda' },
-        { text: "📞 Muloqat o'rnatish" },
-        { text: '📍 Manzilimiz' },
-      ],
-      [{ text: '📦 Buyurtmalarim' }],
-      [{ text: "📝 Ro'yxatdan o'tish" }],
-    ]).resize();
   }
 }
